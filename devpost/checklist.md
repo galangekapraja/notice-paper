@@ -19,7 +19,7 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
   Learner check: Open `http://localhost:3000` on desktop and mobile view, click "Try sample letter", toggle language between English and Indonesian, and test clicking explain with an empty box to see the inline friendly warning.
   Commit: `Scaffold project, responsive paper layout, MIT license, and client state`
 
-- [ ] **2. Gemini AI Integration, Server Validation, Grounded Prompting & Loading Skeleton (The Kernel)**
+- [x] **2. Gemini AI Integration, Server Validation, Grounded Prompting & Loading Skeleton (The Kernel)**
   Becomes usable: Pasting a letter and clicking "Explain this letter" calls `POST /api/explain`. The server enforces request payload limit (50kb) and server-side validation (empty, <15 words, >10,000 chars) without logging letter text. It safely sends passive document data to Google Gemini API using native structured outputs (`responseSchema`), displays an animated loading skeleton, returns the structured plain summary, consequences, and up to 3 next action steps, and handles API errors with friendly fallback messages (no blank screen).
   Why now: The unique kernel of the app and the primary learning goal. Proves the AI pipeline early and establishes server security and validation before polishing details.
   PRD ref: `prd.md > The Core Journey` (steps 3-5), `prd.md > Features and Behavior > 4. Grounded AI Processing`, `prd.md > Features and Behavior > 5. Loading Experience`
