@@ -88,6 +88,42 @@ ${sanitizedText}
 </letter_document>`;
 }
 
+// Error classification helper
+function classifyError(err) {
+  let statusCode = 500;
+  let isConfig = false;
+  let category = 'UNKNOWN_ERROR';
+
+  const msg = (err && (err.message || '')) + ' ' + (err && (err.statusText || ''));
+  if (err && err.status) statusCode = err.status;
+  if (err && err.code && typeof err.code === 'number') statusCode = err.code;
+
+  if (statusCode === 404 || msg.includes('404') || msg.includes('NOT_FOUND') || msg.includes('not found')) {
+    statusCode = 404;
+    isConfig = true;
+    category = 'MODEL_NOT_FOUND';
+  } else if (statusCode === 400 || statusCode === 401 || statusCode === 403 || 
+             msg.includes('API_KEY_INVALID') || msg.includes('API key not valid') || msg.includes('PERMISSION_DENIED')) {
+    statusCode = (statusCode === 401 || statusCode === 403) ? statusCode : 401;
+    isConfig = true;
+    category = 'AUTH_ERROR';
+  } else if (statusCode === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429')) {
+    statusCode = 429;
+    isConfig = false;
+    category = 'RATE_LIMIT';
+  } else if (statusCode === 503 || msg.includes('503') || msg.includes('UNAVAILABLE')) {
+    statusCode = 503;
+    isConfig = false;
+    category = 'SERVICE_UNAVAILABLE';
+  } else if (err && (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT')) {
+    statusCode = 0;
+    isConfig = false;
+    category = 'NETWORK_ERROR';
+  }
+
+  return { statusCode, isConfig, category };
+}
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'Notice Paper' });
@@ -116,7 +152,10 @@ app.post('/api/explain', async (req, res) => {
   if (process.env.NODE_ENV === 'test' && (process.env.USE_STUB === 'true' || req.headers['x-test-stub'])) {
     const stubType = req.headers['x-test-stub'];
     if (stubType === 'error-429') {
-      return res.status(503).json({ success: false, error: 'SERVICE_BUSY' });
+      return res.status(503).json({ success: false, error: 'SERVICE_BUSY', category: 'RATE_LIMIT' });
+    }
+    if (stubType === 'error-config') {
+      return res.status(404).json({ success: false, error: 'CONFIG_ERROR', category: 'MODEL_NOT_FOUND' });
     }
     if (stubType === 'corrupted-json') {
       return res.status(500).json({ success: false, error: 'MALFORMED_RESPONSE' });
@@ -142,20 +181,24 @@ app.post('/api/explain', async (req, res) => {
   // 3. API Key Check
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    return res.status(503).json({
+    console.error('[CONFIG_ERROR] Gemini API key is missing or not configured in .env');
+    return res.status(401).json({
       success: false,
-      error: 'API_KEY_NOT_CONFIGURED',
-      message: 'Gemini API key is not configured in .env'
+      error: 'CONFIG_ERROR',
+      category: 'API_KEY_MISSING'
     });
   }
 
   // 4. Gemini API Call
+  const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+
   try {
-    const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     const ai = new GoogleGenAI({ apiKey });
 
-    // Internal retry helper for transient failures (max 2 attempts)
+    // Internal retry loop (retry ONLY for transient failures, never for config errors)
     let lastError = null;
+    let lastErrorInfo = null;
+
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const response = await ai.models.generateContent({
@@ -182,28 +225,43 @@ app.post('/api/explain', async (req, res) => {
           success: true,
           data: parsed
         });
+
       } catch (err) {
         lastError = err;
-        // If first attempt failed, wait 1 second before retry
+        lastErrorInfo = classifyError(err);
+
+        // If it's a configuration error (404 model not found, 401/403 invalid key), abort immediately without retry
+        if (lastErrorInfo.isConfig) {
+          console.error(`[CONFIG_ERROR] Category: ${lastErrorInfo.category} | HTTP Status: ${lastErrorInfo.statusCode}`);
+          return res.status(lastErrorInfo.statusCode).json({
+            success: false,
+            error: 'CONFIG_ERROR',
+            category: lastErrorInfo.category
+          });
+        }
+
+        // Transient failure: if attempt 1, wait 1 second before attempt 2
         if (attempt === 1) {
           await new Promise(r => setTimeout(r, 1000));
         }
       }
     }
 
-    // Both attempts failed: Log only error type/code, NEVER log the user letter text
-    console.error(`Gemini request failed after retry: ${lastError ? lastError.message : 'Unknown error'}`);
+    // Both attempts failed for transient reason: Log ONLY category & status code (ZERO letter text, ZERO keys)
+    console.error(`[TRANSIENT_ERROR] Category: ${lastErrorInfo ? lastErrorInfo.category : 'SERVICE_UNAVAILABLE'} | HTTP Status: ${lastErrorInfo ? lastErrorInfo.statusCode : 503}`);
     return res.status(503).json({
       success: false,
       error: 'SERVICE_BUSY',
-      message: 'The AI explanation service is temporarily unavailable.'
+      category: lastErrorInfo ? lastErrorInfo.category : 'SERVICE_UNAVAILABLE'
     });
 
   } catch (err) {
-    console.error(`Internal server error: ${err.message}`);
+    const errInfo = classifyError(err);
+    console.error(`[INTERNAL_ERROR] Category: ${errInfo.category} | HTTP Status: ${errInfo.statusCode}`);
     return res.status(500).json({
       success: false,
-      error: 'INTERNAL_ERROR'
+      error: 'INTERNAL_ERROR',
+      category: errInfo.category
     });
   }
 });

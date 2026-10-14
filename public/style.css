@@ -54,6 +54,10 @@ body {
   outline-offset: 2px !important;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

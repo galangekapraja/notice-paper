@@ -1,34 +1,52 @@
-const http = require('http');
+process.env.NODE_ENV = 'test';
+const { Readable } = require('stream');
+const app = require('../server');
 
-function post(path, body, headers = {}) {
-  return new Promise((resolve, reject) => {
+function post(apiPath, body, headers = {}) {
+  return new Promise((resolve) => {
     const payload = JSON.stringify(body);
-    const req = http.request(`http://localhost:3000${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-        ...headers
-      }
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
+    const req = Readable.from([Buffer.from(payload)]);
+    req.method = 'POST';
+    req.url = apiPath;
+    req.headers = {
+      'content-type': 'application/json',
+      'content-length': Buffer.byteLength(payload).toString(),
+      ...headers
+    };
+
+    let responseData = '';
+    const res = {
+      statusCode: 200,
+      headers: {},
+      setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+      getHeader(k) { return this.headers[k.toLowerCase()]; },
+      status(code) { this.statusCode = code; return this; },
+      json(obj) {
+        responseData = JSON.stringify(obj);
+        this.setHeader('content-type', 'application/json');
+        this.end();
+      },
+      send(data) {
+        responseData = data;
+        this.end();
+      },
+      write(chunk) { responseData += chunk; },
+      end(chunk) {
+        if (chunk) responseData += chunk;
         try {
-          resolve({ status: res.statusCode, body: JSON.parse(data) });
+          resolve({ status: this.statusCode, body: JSON.parse(responseData) });
         } catch (e) {
-          resolve({ status: res.statusCode, rawBody: data });
+          resolve({ status: this.statusCode, rawBody: responseData });
         }
-      });
-    });
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
+      }
+    };
+
+    app(req, res);
   });
 }
 
 async function verify() {
-  console.log('Testing Notice Paper Slice 2...');
+  console.log('Testing Notice Paper Slice 2 (In-memory Test Mode)...');
 
   // 1. Empty input validation
   const emptyRes = await post('/api/explain', { text: '   ' });
@@ -67,11 +85,18 @@ async function verify() {
   }
   console.log('✓ Transient service error handled gracefully with 503 SERVICE_BUSY (no blank screen)');
 
+  // 6. Configuration error stub test
+  const configRes = await post('/api/explain', { text: validSample }, { 'x-test-stub': 'error-config' });
+  if (configRes.status !== 404 || configRes.body.error !== 'CONFIG_ERROR') {
+    throw new Error(`Config error check failed: ${JSON.stringify(configRes)}`);
+  }
+  console.log('✓ Configuration error distinguished properly with 404 CONFIG_ERROR');
+
   console.log('\nAll Slice 2 mechanical verifications PASSED!');
   process.exit(0);
 }
 
 verify().catch(err => {
-  console.error('Verification failed:', err.message);
+  console.error('Verification failed:', err);
   process.exit(1);
 });

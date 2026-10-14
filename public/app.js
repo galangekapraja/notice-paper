@@ -72,6 +72,8 @@ Apex Energy Services`;
       disclaimer: "Notice Paper is a plain-language reading aid, not official legal or financial advice.",
       errorNetworkTitle: "Connection Problem",
       errorNetworkDesc: "It looks like your internet connection was lost.",
+      errorConfigTitle: "Configuration Issue",
+      errorConfigDesc: "The AI service is not properly configured on the server (e.g. invalid API key or model name). Please check the server settings.",
       errorServiceTitle: "Service Busy",
       errorServiceDesc: "The explanation service is temporarily busy.",
       errorReassurance: "Your letter is still safe in the box and hasn't been lost.",
@@ -112,6 +114,8 @@ Apex Energy Services`;
       disclaimer: "Notice Paper adalah alat bantu membaca dengan bahasa sederhana, bukan penasihat hukum atau keuangan resmi.",
       errorNetworkTitle: "Masalah Koneksi",
       errorNetworkDesc: "Sepertinya koneksi internet terputus.",
+      errorConfigTitle: "Kendala Konfigurasi",
+      errorConfigDesc: "Layanan AI belum terkonfigurasi dengan benar di server (misalnya API key atau nama model belum sesuai). Silakan periksa pengaturan server.",
       errorServiceTitle: "Layanan Sedang Sibuk",
       errorServiceDesc: "Layanan penjelasan sedang sibuk atau mengalami kendala sementara.",
       errorReassurance: "Surat Anda masih ada di kotak, tidak hilang.",
@@ -129,7 +133,8 @@ Apex Energy Services`;
     isLoading: false,
     rawText: '',
     loadingTimer: null,
-    lastResult: null
+    lastResult: null,
+    lastError: null
   };
 
   // DOM Elements
@@ -215,6 +220,10 @@ Apex Energy Services`;
     el.uiDisclaimer.textContent = t.disclaimer;
     el.uiErrorReassurance.textContent = t.errorReassurance;
     el.uiRetryBtn.textContent = t.retryBtn;
+
+    if (!el.stateError.hidden && state.lastError) {
+      applyErrorContent(state.lastError);
+    }
 
     updateCharCounter();
   }
@@ -349,12 +358,22 @@ Apex Energy Services`;
         })
       });
 
-      const resData = await response.json();
-
-      if (!response.ok || !resData.success) {
-        throw new Error(resData.error || 'Server error');
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (parseErr) {
+        // Not a JSON response
       }
 
+      if (!response.ok || !resData || !resData.success) {
+        const error = new Error((resData && resData.error) || 'SERVER_ERROR');
+        error.status = response.status;
+        error.errorType = resData && resData.error;
+        error.category = resData && resData.category;
+        throw error;
+      }
+
+      state.lastError = null;
       renderResults(resData.data);
     } catch (err) {
       handleError(err);
@@ -452,16 +471,35 @@ Apex Energy Services`;
     scrollToResults();
   }
 
-  // Handle Error
-  function handleError(err) {
+  // Apply Error Content based on classification
+  function applyErrorContent(err) {
     const t = I18N[state.language];
-    if (err.message === 'NETWORK_ERROR' || !navigator.onLine) {
+
+    const isConfigError = err.errorType === 'CONFIG_ERROR' ||
+                          ['MODEL_NOT_FOUND', 'AUTH_ERROR', 'API_KEY_MISSING'].includes(err.category) ||
+                          err.status === 401 || err.status === 404;
+
+    const isNetworkError = err.name === 'TypeError' || err.message === 'NETWORK_ERROR' || !navigator.onLine;
+
+    if (isNetworkError) {
       el.errorTitle.textContent = t.errorNetworkTitle;
       el.errorDesc.textContent = t.errorNetworkDesc;
+      el.btnRetry.hidden = false;
+    } else if (isConfigError) {
+      el.errorTitle.textContent = t.errorConfigTitle;
+      el.errorDesc.textContent = t.errorConfigDesc;
+      el.btnRetry.hidden = true; // Retrying without server fix will just fail again
     } else {
       el.errorTitle.textContent = t.errorServiceTitle;
       el.errorDesc.textContent = t.errorServiceDesc;
+      el.btnRetry.hidden = false;
     }
+  }
+
+  // Handle Error
+  function handleError(err) {
+    state.lastError = err;
+    applyErrorContent(err);
     showState('error');
     scrollToResults();
   }
