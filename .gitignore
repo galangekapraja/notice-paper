@@ -5,3 +5,17 @@
 .env
 .env.*
 !.env.example
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS metadata
+.DS_Store
+
+# Local agent/tool settings
+settings.local.json
+*.local.json
