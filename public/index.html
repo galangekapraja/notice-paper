@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notice Paper — Plain-Language Official Letter Interpreter</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="app-header">
+      <div class="header-content">
+        <div class="brand">
+          <div class="brand-seal" aria-hidden="true">NP</div>
+          <div>
+            <h1 class="brand-title" id="ui-title">Notice Paper</h1>
+            <p class="brand-subtitle" id="ui-subtitle">Paste an official letter, get a plain explanation and next steps.</p>
+          </div>
+        </div>
+
+        <div class="lang-selector-wrapper">
+          <fieldset class="lang-selector">
+            <legend class="sr-only">Choose Language</legend>
+            <label class="lang-label">
+              <input type="radio" name="language" value="en" checked>
+              <span>English</span>
+            </label>
+            <label class="lang-label">
+              <input type="radio" name="language" value="id">
+              <span>Bahasa Indonesia</span>
+            </label>
+          </fieldset>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content" id="main-content">
+      <div class="two-column-layout">
+        <!-- Left Column: Input Surface -->
+        <section class="column-input" aria-labelledby="input-heading">
+          <h2 id="input-heading" class="sr-only">Input Letter</h2>
+
+          <div class="privacy-alert" role="note" id="ui-privacy-alert">
+            <span class="alert-icon" aria-hidden="true">🔒</span>
+            <span class="privacy-text" id="ui-privacy-text">
+              Text is sent to a third-party AI service for processing, which may retain data per its own terms. Do not paste sensitive personal data (national ID, bank account, passwords).
+            </span>
+          </div>
+
+          <div class="paper-sheet-card">
+            <div class="paper-sheet-header">
+              <span class="sheet-watermark" aria-hidden="true">OFFICIAL CORRESPONDENCE</span>
+              <button type="button" class="btn-sample" id="btn-sample">
+                <span class="btn-icon" aria-hidden="true">📄</span>
+                <span id="ui-sample-btn">Try sample letter</span>
+              </button>
+            </div>
+
+            <div class="textarea-wrapper">
+              <label for="letter-input" class="sr-only" id="ui-textarea-label">Paste letter text</label>
+              <textarea 
+                id="letter-input" 
+                class="paper-textarea" 
+                rows="10" 
+                placeholder="Paste the full text of your letter or bill here..."
+                aria-describedby="char-counter input-error-msg"
+              ></textarea>
+            </div>
+
+            <div class="paper-sheet-footer">
+              <div class="counter-container">
+                <span id="char-counter" class="char-counter">0 / 10,000 characters</span>
+              </div>
+              <div id="input-error-msg" class="inline-error" role="alert" aria-live="polite" hidden></div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button type="button" class="btn-primary" id="btn-explain">
+              <span class="spinner" id="btn-spinner" aria-hidden="true" hidden></span>
+              <span class="btn-text" id="ui-action-btn">Explain this letter</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Right Column: Results Surface -->
+        <section class="column-results" id="results-section" aria-labelledby="results-heading">
+          <h2 id="results-heading" class="sr-only">Explanation Results</h2>
+
+          <!-- 1. Empty State (Initial) -->
+          <div class="state-card state-empty" id="state-empty">
+            <div class="empty-icon" aria-hidden="true">📜</div>
+            <h3 class="empty-title" id="ui-empty-title">Ready to Read</h3>
+            <p class="empty-desc" id="ui-empty-desc">
+              Your plain-language explanation will appear here after you paste a letter and click the button.
+            </p>
+          </div>
+
+          <!-- 2. Skeleton Loading State -->
+          <div class="state-card state-loading" id="state-loading" aria-live="polite" hidden>
+            <div class="loading-header">
+              <div class="loading-spinner-ring" aria-hidden="true"></div>
+              <p class="loading-text" id="ui-loading-text">Reading your letter, usually takes a few seconds.</p>
+            </div>
+            <div class="skeleton-banner shimmer"></div>
+            <div class="skeleton-block shimmer" style="height: 60px;"></div>
+            <div class="skeleton-block shimmer" style="height: 48px;"></div>
+            <div class="skeleton-list">
+              <div class="skeleton-line shimmer" style="width: 85%;"></div>
+              <div class="skeleton-line shimmer" style="width: 75%;"></div>
+              <div class="skeleton-line shimmer" style="width: 90%;"></div>
+            </div>
+          </div>
+
+          <!-- 3. Error Alert State -->
+          <div class="state-card state-error" id="state-error" role="alert" hidden>
+            <div class="error-badge">
+              <span class="error-icon" aria-hidden="true">⚠️</span>
+              <h3 class="error-title" id="error-title">Error</h3>
+            </div>
+            <p class="error-desc" id="error-desc"></p>
+            <p class="error-reassurance" id="ui-error-reassurance">Your letter is still safe in the box and hasn't been lost.</p>
+            <button type="button" class="btn-retry" id="btn-retry">
+              <span id="ui-retry-btn">Try again</span>
+            </button>
+          </div>
+
+          <!-- 4. Notice / Special States (Non-English / Not a Letter) -->
+          <div class="state-card state-notice" id="state-notice" hidden>
+            <div class="notice-badge">
+              <span class="notice-icon" aria-hidden="true">ℹ️</span>
+              <h3 class="notice-title" id="notice-title">Notice</h3>
+            </div>
+            <p class="notice-desc" id="notice-desc"></p>
+          </div>
+
+          <!-- 5. Structured Explanation Results -->
+          <div class="results-container" id="results-container" hidden>
+            <!-- Card 1: Deadline & Amount -->
+            <div class="result-card card-deadline" id="card-deadline">
+              <div class="deadline-pill">
+                <span class="pill-icon" aria-hidden="true">📅</span>
+                <span class="pill-label" id="ui-deadline-label">DEADLINE & AMOUNT</span>
+              </div>
+              <div class="deadline-details">
+                <div class="deadline-item">
+                  <span class="detail-label" id="ui-due-date-label">Due Date:</span>
+                  <span class="detail-value highlight" id="result-deadline">—</span>
+                  <span class="badge-verification" id="badge-deadline-status" hidden></span>
+                </div>
+                <div class="deadline-item">
+                  <span class="detail-label" id="ui-amount-label">Amount Due:</span>
+                  <span class="detail-value highlight" id="result-amount">—</span>
+                  <span class="badge-verification" id="badge-amount-status" hidden></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Plain Summary -->
+            <div class="result-card card-summary">
+              <h3 class="card-title">
+                <span class="card-icon" aria-hidden="true">💡</span>
+                <span id="ui-summary-title">What This Letter Is About</span>
+              </h3>
+              <p class="card-text" id="result-summary"></p>
+            </div>
+
+            <!-- Card 3: Consequences -->
+            <div class="result-card card-consequences">
+              <h3 class="card-title">
+                <span class="card-icon" aria-hidden="true">⚖️</span>
+                <span id="ui-consequences-title">What Happens If Ignored</span>
+              </h3>
+              <p class="card-text" id="result-consequences"></p>
+            </div>
+
+            <!-- Card 4: Next Steps -->
+            <div class="result-card card-steps">
+              <h3 class="card-title">
+                <span class="card-icon" aria-hidden="true">✅</span>
+                <span id="ui-steps-title">What You Should Do Next</span>
+              </h3>
+              <ol class="steps-list" id="result-steps"></ol>
+            </div>
+
+            <!-- Card 5: Uncertainty Flags -->
+            <div class="result-card card-uncertainties" id="card-uncertainties" hidden>
+              <div class="uncertainty-header">
+                <span class="uncertainty-icon" aria-hidden="true">🔍</span>
+                <h3 class="card-title" id="ui-uncertainties-title">Points Needing Clarification</h3>
+              </div>
+              <p class="uncertainty-intro" id="ui-uncertainties-intro">
+                Some details in this letter are ambiguous or incomplete. We recommend contacting the sender directly:
+              </p>
+              <ul class="uncertainties-list" id="result-uncertainties"></ul>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p class="disclaimer-text" id="ui-disclaimer">
+          Notice Paper is a plain-language reading aid, not official legal or financial advice.
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

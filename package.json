@@ -1,0 +1,20 @@
+{
+  "name": "notice-paper",
+  "version": "1.0.0",
+  "description": "Plain-language interpreter for official letters and bills",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "ai",
+    "plain-language",
+    "letters",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}
