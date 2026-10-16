@@ -393,5 +393,6 @@ if (require.main === module) {
 app.verifyVerbatimSubstring = verifyVerbatimSubstring;
 app.normalizeWhitespace = normalizeWhitespace;
 app.cleanStringList = cleanStringList;
+app.buildUserContent = buildUserContent;
 
 module.exports = app;
