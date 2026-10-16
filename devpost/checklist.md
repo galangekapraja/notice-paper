@@ -63,11 +63,23 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
 
 - [x] Early usable behavior & Prompt Walkthrough — Slice 2 (Gemini AI integration, prompt design & first live letter explanation)
 - [x] Verbatim Verification & Accuracy Walkthrough — Slice 3 (Server-side verification logic & multi-amount comparison)
-- [ ] Final kick-the-tires exploration and feedback completed — Slice 5 (Complete app, edge cases & accessibility)
+- [x] Final kick-the-tires exploration and feedback completed — Slice 5 (Complete app, edge cases & accessibility)
 
 ## Final Review
 
-- [ ] Clear previous results or notice cards on client validation failure (when new input is empty, too short, or too long)
+Learner kick-the-tires observations recorded:
+- All sample letters in `test-data/` plus extra test texts (Indonesian letter, recipe, too-short, split-date, oversized) behaved as expected.
+- Confirmed fixed: after a rejected too-short text, the old "Not an Official Letter" card is gone and the panel shows "Ready to Read".
+- Server stopped then Explain: "Connection Problem" card with Try again appeared, no result cards; after restarting, Try again worked normally.
+- Tab-only navigation (Safari with Tab-to-highlight enabled): OK.
+- iPhone size 393 x 852 in Safari Responsive Design Mode: OK, no horizontal scroll.
+- Lighthouse Accessibility: 100 on mobile and desktop (initial page only; result cards were not part of the audit). SEO 90 due to missing meta description.
+- Over-10,000-character letter after clicking Explain: limit message shown and no loading triggered.
+- Language switch after a result: UI card headers switch, while generated explanation body remains in generated language until Explain is clicked again (documented limit).
+- Requested refinement: Add meta description to `index.html` for Lighthouse SEO audit.
+
+- [x] Clear previous results or notice cards on client validation failure (when new input is empty, too short, or too long)
+- [ ] Add meta description to index.html for Lighthouse SEO audit
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
@@ -83,6 +95,9 @@ Reflection: [to be filled upon completion]
 Activity mode: [to be filled upon completion]
 
 ## Revisions
+
+- **2026-10-17 (SEO audit polish)**:
+  - `public/index.html`: added `<meta name="description" ...>` tag describing the app's plain-language interpretation features, resolving the Lighthouse SEO audit finding.
 
 - **2026-10-17 (Kick-the-tires feedback fix)**:
   - `public/app.js`: updated client validation failure handling in `validateInput()` to clear previous results, notice cards (e.g. "Not an Official Letter"), and cached state by resetting the display to the initial empty state (`showState('empty')`) whenever newly submitted input fails validation (empty, <15 words, or >10,000 chars).
