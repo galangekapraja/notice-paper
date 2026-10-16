@@ -60,9 +60,10 @@ Apex Energy Services`;
       deadlineLabel: "DEADLINE & AMOUNT",
       dueDateLabel: "Due Date:",
       amountLabel: "Amount Due:",
-      noDeadline: "No deadline was mentioned.",
-      noAmount: "No payment amount was mentioned.",
-      verifiedBadge: "Verified in text",
+      notStated: "Not stated in the letter",
+      noDeadline: "Not stated in the letter",
+      noAmount: "Not stated in the letter",
+      verifiedBadge: "Found in the letter",
       unverifiedBadge: "Not confirmed in the letter text",
       summaryTitle: "What This Letter Is About",
       consequencesTitle: "What Happens If Ignored",
@@ -110,9 +111,10 @@ Apex Energy Services`;
       deadlineLabel: "TENGGAT & NOMINAL",
       dueDateLabel: "Batas Tanggal:",
       amountLabel: "Total Tagihan:",
-      noDeadline: "Tidak ada tenggat waktu yang disebutkan.",
-      noAmount: "Tidak ada tagihan yang disebutkan.",
-      verifiedBadge: "Sesuai isi surat",
+      notStated: "Tidak disebut di surat",
+      noDeadline: "Tidak disebut di surat",
+      noAmount: "Tidak disebut di surat",
+      verifiedBadge: "Ditemukan di surat",
       unverifiedBadge: "Tidak ditemukan langsung di surat",
       summaryTitle: "Ringkasan Isi Surat",
       consequencesTitle: "Akibat Jika Diabaikan",
@@ -239,6 +241,10 @@ Apex Energy Services`;
 
     if (!el.stateError.hidden && state.lastError) {
       applyErrorContent(state.lastError);
+    }
+
+    if (!el.resultsContainer.hidden && state.lastResult) {
+      renderResults(state.lastResult, false);
     }
 
     updateCharCounter();
@@ -403,7 +409,9 @@ Apex Energy Services`;
   });
 
   // Render Results (Prepared for Slice 2 & 3)
-  function renderResults(data) {
+  // Render Results (Prepared for Slice 2 & 3)
+  function renderResults(data, shouldScroll = true) {
+    state.lastResult = data;
     const t = I18N[state.language];
 
     // Check non-English state
@@ -411,7 +419,7 @@ Apex Energy Services`;
       el.noticeTitle.textContent = t.noticeNonEnglishTitle;
       el.noticeDesc.textContent = t.noticeNonEnglishDesc;
       showState('notice');
-      scrollToResults();
+      if (shouldScroll) scrollToResults();
       return;
     }
 
@@ -420,19 +428,19 @@ Apex Energy Services`;
       el.noticeTitle.textContent = t.noticeNonLetterTitle;
       el.noticeDesc.textContent = t.noticeNonLetterDesc;
       showState('notice');
-      scrollToResults();
+      if (shouldScroll) scrollToResults();
       return;
     }
 
     // Happy Path: Populate Results
     showState('results');
 
-    // Deadline & Amount
-    el.resultDeadline.textContent = data.deadline || t.noDeadline;
-    el.resultAmount.textContent = data.amount_due || t.noAmount;
+    // Deadline & Amount - strictly check for null / empty / 'null'
+    const hasAmount = data.amount_due !== null && data.amount_due !== undefined && data.amount_due !== 'null' && String(data.amount_due).trim() !== '';
+    const hasDeadline = data.deadline !== null && data.deadline !== undefined && data.deadline !== 'null' && String(data.deadline).trim() !== '';
 
-    // Verbatim Badges (Slice 3)
-    if (data.amount_due) {
+    if (hasAmount) {
+      el.resultAmount.textContent = data.amount_due;
       el.badgeAmountStatus.hidden = false;
       if (data.amount_verified) {
         el.badgeAmountStatus.textContent = t.verifiedBadge;
@@ -442,10 +450,12 @@ Apex Energy Services`;
         el.badgeAmountStatus.className = 'badge-verification unverified';
       }
     } else {
+      el.resultAmount.textContent = t.notStated;
       el.badgeAmountStatus.hidden = true;
     }
 
-    if (data.deadline) {
+    if (hasDeadline) {
+      el.resultDeadline.textContent = data.deadline;
       el.badgeDeadlineStatus.hidden = false;
       if (data.deadline_verified) {
         el.badgeDeadlineStatus.textContent = t.verifiedBadge;
@@ -455,6 +465,7 @@ Apex Energy Services`;
         el.badgeDeadlineStatus.className = 'badge-verification unverified';
       }
     } else {
+      el.resultDeadline.textContent = t.notStated;
       el.badgeDeadlineStatus.hidden = true;
     }
 
@@ -484,7 +495,7 @@ Apex Energy Services`;
       el.cardUncertainties.hidden = true;
     }
 
-    scrollToResults();
+    if (shouldScroll) scrollToResults();
   }
 
   // Apply Error Content based on classification

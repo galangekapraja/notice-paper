@@ -29,7 +29,7 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
   Learner check: Pause for hands-on walkthrough: Inspect the prompt and API call in `server.js`, paste the overdue utility bill sample in the browser, observe the loading skeleton, and see the plain summary, consequences, and 3 steps appear.
   Commit: `Integrate Gemini API with structured outputs, server validation, and loading skeleton`
 
-- [ ] **3. Server-Side Verbatim Verification, Accuracy Badges & Multi-Amount Test**
+- [x] **3. Server-Side Verbatim Verification, Accuracy Badges & Multi-Amount Test**
   Becomes usable: The server programmatically checks whether the extracted `amount_due` and `deadline` appear in the source letter text with normalized whitespace. The UI displays the prominent terracotta deadline/amount banner with plain-language bilingual confirmation or warning badges (*"Not confirmed in the letter text"* / *"Tidak ditemukan langsung di surat"*). Includes test sample with multiple itemized amounts and dates (`test-data/sample-multi-amounts.txt`).
   Why now: Directly addresses the learner's goal of understanding how to verify AI output correctness and ensures amounts and dates are factually grounded.
   PRD ref: `prd.md > Features and Behavior > 6. Structured Results Display` (Card 1), `prd.md > Look and Feel` (verbatim rule)
@@ -62,7 +62,7 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
 ## Hands-on Checkpoints
 
 - [ ] Early usable behavior & Prompt Walkthrough — Slice 2 (Gemini AI integration, prompt design & first live letter explanation)
-- [ ] Verbatim Verification & Accuracy Walkthrough — Slice 3 (Server-side verification logic & multi-amount comparison)
+- [x] Verbatim Verification & Accuracy Walkthrough — Slice 3 (Server-side verification logic & multi-amount comparison)
 - [ ] Final kick-the-tires exploration and feedback completed — Slice 5 (Complete app, edge cases & accessibility)
 
 ## Final Review
@@ -82,6 +82,14 @@ Reflection: [to be filled upon completion]
 Activity mode: [to be filled upon completion]
 
 ## Revisions
+
+- **2026-10-17 (Slice 3: Verbatim Verification, Null Display, Badge Logic & Deadline/Amount Pairing)**:
+  - Implemented server-side deterministic substring check with whitespace normalization (`normalizeWhitespace` and `verifyVerbatimSubstring` in `server.js`).
+  - Added null normalization in `server.js` and updated `public/app.js` with `notStated: "Not stated in the letter"` / `"Tidak disebut di surat"`, hiding badges when values are null.
+  - Corrected badge display logic: displays positive badge (*"Found in the letter"* / *"Ditemukan di surat"*) when verbatim check passes, and warning badge (*"Not confirmed in the letter text"* / *"Tidak ditemukan langsung di surat"*) only when an extracted value fails verbatim check.
+  - Added Rule 4 to system prompt and schema descriptions: `amount_due` must pair with `deadline` for the earliest required payment tier, with secondary tiers explicitly named in uncertainty flags.
+  - Added all four test samples in `test-data/` (`sample-overdue-bill.txt`, `sample-multi-amounts.txt`, `sample-ambiguous-notice.txt`, `sample-injection-attempt.txt`). Verified 100% pass across all samples.
+  - Created automated verification test `test/slice3-verify.js` testing positive match, modified amount, missing/null amount, and whitespace normalization.
 
 - **2026-10-17 (Gemini Free-Tier Model Selection & Error Handling Improvement)**:
   - Investigated official Google AI documentation (`ai.google.dev`) for active free-tier Gemini models.
