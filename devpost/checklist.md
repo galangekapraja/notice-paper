@@ -84,15 +84,15 @@ Learner kick-the-tires observations recorded:
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
+- [x] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [Guided route in progress — tracing core letter explanation through server.js and public/app.js]
-Route and stops: [Stop 1 in progress]
-Edit outcome: [Pending]
-Reflection: [Pending]
-Activity mode: guided route (tailored to learner with ~30% coding experience per profile).
+Activity and evidence: Brief evidence-based recap of the 3 architecture stops connecting core letter interpretation to learner's desired outcome (how text is sent, structured prompt defense, and deterministic verbatim verification), recorded honestly as a recap per learner preference rather than interactive hands-on tour.
+Route and stops: Reference route documented in `devpost/app-map.html`: Stop 1 (`public/app.js` `function validateInput`), Stop 2 (`server.js` `function buildUserContent` and `const responseSchema =`), Stop 3 (`server.js` `function verifyVerbatimSubstring`).
+Edit outcome: Not applicable (learner requested brief recap without code editing exercise).
+Reflection: Covered via architectural takeaway on deterministic output grounding and presence vs. correctness limitation.
+Activity mode: brief recap (learner requested brief plain-language recap).
 
 ## Revisions
 
