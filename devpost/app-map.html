@@ -208,7 +208,7 @@
     <header>
       <h1>Notice Paper — App Map</h1>
       <p class="tagline">Interactive architectural guide and code route for understanding how plain-language interpretation and verbatim verification work.</p>
-      <div class="meta-box">Snapshot Commit: <code>816c0d6</code> • Node.js 18+ • Express &amp; Google Gemini API</div>
+      <div class="meta-box">Snapshot Commit: <code>33e4fe3</code> • Node.js 18+ • Express &amp; Google Gemini API</div>
     </header>
 
     <!-- Overview -->
@@ -281,7 +281,7 @@
         <p>The Express backend receives the letter. It protects the application through three layers:</p>
         <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
           <li><strong>Passive Isolation:</strong> The user's letter is enclosed inside <code>&lt;letter_document&gt;...&lt;/letter_document&gt;</code> tags (search anchor: <code>function buildUserContent</code>) so that instructions like <em>"ignore previous instructions"</em> cannot hijack the model.</li>
-          <li><strong>Zero Logging:</strong> The server never logs the letter text to stdout/console, protecting user privacy.</li>
+          <li><strong>No letter logging:</strong> The server does not log letter text. When something fails it logs only the error category, HTTP status and reason.</li>
           <li><strong>JSON Schema Enforcement:</strong> Instead of asking Gemini to write arbitrary text, it passes <code>responseSchema</code> to guarantee fields like <code>amount_due</code>, <code>deadline</code>, <code>summary</code>, and <code>next_steps</code> arrive cleanly.</li>
         </ul>
       </div>
@@ -336,7 +336,7 @@
 
       <div class="change-pointer">
         <strong>Visual Styling, Colors, and Typography:</strong>
-        <br>Edit <code>public/style.css</code> (search anchor: <code>:root {</code>). Notice Paper uses a 60/30/10 CSS custom property palette (<code>--bg-canvas: #F2EFE8</code>, <code>--bg-card: #FAF8F5</code>, <code>--accent-terracotta: #C05621</code>).
+        <br>Edit <code>public/style.css</code> (search anchor: <code>:root {</code>). Notice Paper uses a 60/30/10 CSS custom property palette (<code>--bg-canvas: #F2EFE8</code>, <code>--bg-card: #FAF8F5</code>, <code>--alert-terracotta: #9A3B1F</code>).
       </div>
 
       <details>
