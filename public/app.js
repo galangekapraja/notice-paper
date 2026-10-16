@@ -292,20 +292,25 @@ Apex Energy Services`;
     const t = I18N[state.language];
     clearInlineError();
 
-    if (!text || text.trim().length === 0) {
-      showInlineError(t.errorEmpty);
+    function onValidationFailure(msg) {
+      showState('empty');
+      state.lastResult = null;
+      state.lastError = null;
+      showInlineError(msg);
       return false;
+    }
+
+    if (!text || text.trim().length === 0) {
+      return onValidationFailure(t.errorEmpty);
     }
 
     const wordCount = countWords(text);
     if (wordCount < 15) {
-      showInlineError(t.errorShort);
-      return false;
+      return onValidationFailure(t.errorShort);
     }
 
     if (text.length > 10000) {
-      showInlineError(t.errorLong);
-      return false;
+      return onValidationFailure(t.errorLong);
     }
 
     return true;

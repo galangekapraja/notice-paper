@@ -61,12 +61,13 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
 
 ## Hands-on Checkpoints
 
-- [ ] Early usable behavior & Prompt Walkthrough — Slice 2 (Gemini AI integration, prompt design & first live letter explanation)
+- [x] Early usable behavior & Prompt Walkthrough — Slice 2 (Gemini AI integration, prompt design & first live letter explanation)
 - [x] Verbatim Verification & Accuracy Walkthrough — Slice 3 (Server-side verification logic & multi-amount comparison)
 - [ ] Final kick-the-tires exploration and feedback completed — Slice 5 (Complete app, edge cases & accessibility)
 
 ## Final Review
 
+- [ ] Clear previous results or notice cards on client validation failure (when new input is empty, too short, or too long)
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
@@ -82,6 +83,10 @@ Reflection: [to be filled upon completion]
 Activity mode: [to be filled upon completion]
 
 ## Revisions
+
+- **2026-10-17 (Kick-the-tires feedback fix)**:
+  - `public/app.js`: updated client validation failure handling in `validateInput()` to clear previous results, notice cards (e.g. "Not an Official Letter"), and cached state by resetting the display to the initial empty state (`showState('empty')`) whenever newly submitted input fails validation (empty, <15 words, or >10,000 chars).
+  - `test/network-error-verify.js`: added automated behavioral test verifying that invalid input immediately clears any active notice cards or results and restores the ready-to-read empty state.
 
 - **2026-10-17 (Repository review fixes)**:
   - `server.js`: the server now enforces "up to 3 next steps" and drops empty or non-string list items itself (`cleanStringList`), instead of relying on the model following the schema description. Malformed JSON request bodies now return `400 INVALID_JSON` without Express printing the error, whose message could contain the first characters of the request body.

@@ -125,4 +125,18 @@ check('no more than 3 next steps are drawn, even if more are provided', () => {
   assert.strictEqual($('result-steps').children.length, 3);
 });
 
+check('validation failure resets right panel to empty state and clears previous notice/results', () => {
+  // Show a previous notice (e.g. not an official letter)
+  hook.renderResults({ is_english: true, is_official_letter: false });
+  assert.strictEqual($('state-notice').hidden, false);
+  assert.strictEqual($('state-empty').hidden, true);
+
+  // When validating too-short text, it should fail and reset to empty state
+  const valid = hook.validateInput('too short text');
+  assert.strictEqual(valid, false);
+  assert.strictEqual($('state-notice').hidden, true);
+  assert.strictEqual($('results-container').hidden, true);
+  assert.strictEqual($('state-empty').hidden, false);
+});
+
 console.log('\nAll browser-behavior checks PASSED (fake DOM, no browser or network).');
