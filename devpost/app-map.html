@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notice Paper — App Map & Architecture Tour</title>
+  <style>
+    :root {
+      --bg-canvas: #F2EFE8;
+      --bg-card: #FAF8F5;
+      --text-main: #2D3748;
+      --text-muted: #5A6A80;
+      --border-color: #E2DDD5;
+      --primary-accent: #2C5282;
+      --primary-terracotta: #C05621;
+      --success-green: #276749;
+      --code-bg: #EAE6DF;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      font-size: 2.25rem;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .tagline {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+    }
+
+    .meta-box {
+      margin-top: 1rem;
+      display: inline-block;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.75rem;
+      background: var(--code-bg);
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    h2 {
+      font-family: Georgia, serif;
+      font-size: 1.5rem;
+      color: var(--primary-accent);
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      margin: 1.25rem 0 0.5rem 0;
+      color: var(--text-main);
+    }
+
+    p { margin-bottom: 1rem; }
+
+    code {
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 0.9em;
+      background-color: var(--code-bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+    }
+
+    pre {
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 0.85rem;
+      background-color: var(--code-bg);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.75rem 0 1rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Diagram */
+    .diagram-wrapper {
+      margin: 1.5rem 0;
+      text-align: center;
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+    }
+
+    .diagram-svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Stops */
+    .stop-card {
+      border-left: 4px solid var(--primary-accent);
+      background: #FFFFFF;
+      padding: 1.25rem;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 1.25rem;
+      border-top: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .stop-card.stop-2 { border-left-color: var(--primary-terracotta); }
+    .stop-card.stop-3 { border-left-color: var(--success-green); }
+
+    .stop-badge {
+      display: inline-block;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      color: var(--primary-accent);
+    }
+    .stop-2 .stop-badge { color: var(--primary-terracotta); }
+    .stop-3 .stop-badge { color: var(--success-green); }
+
+    .change-pointer {
+      margin-bottom: 0.75rem;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    .change-pointer::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--primary-terracotta);
+      font-weight: bold;
+    }
+
+    details {
+      margin-top: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: #FFFFFF;
+      padding: 0.75rem 1rem;
+    }
+
+    summary {
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      color: var(--primary-accent);
+    }
+
+    summary:hover {
+      text-decoration: underline;
+    }
+
+    .practice-box {
+      border-left: 4px solid var(--primary-terracotta);
+      background: #FFF9F5;
+      padding: 1.25rem;
+      border-radius: 0 6px 6px 0;
+      margin-top: 1rem;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Notice Paper — App Map</h1>
+      <p class="tagline">Interactive architectural guide and code route for understanding how plain-language interpretation and verbatim verification work.</p>
+      <div class="meta-box">Snapshot Commit: <code>816c0d6</code> • Node.js 18+ • Express &amp; Google Gemini API</div>
+    </header>
+
+    <!-- Overview -->
+    <section>
+      <h2>1. The Big Picture</h2>
+      <p><strong>Notice Paper</strong> solves official mail paralysis by turning intimidating letters and bills into 5 calm, structured answers: <em>Deadline &amp; Amount</em>, <em>Plain Summary</em>, <em>Consequences</em>, <em>Up to 3 Next Steps</em>, and <em>Also Worth Knowing</em>.</p>
+      <p>The app is built with 3 core moving parts:</p>
+      <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+        <li><strong>Frontend Client (<code>public/index.html</code>, <code>public/app.js</code>, <code>public/style.css</code>)</strong>: Collects letter text, validates boundaries (&lt;15 words, &gt;10,000 characters, empty), renders loading states, and draws verified badges.</li>
+        <li><strong>Server &amp; API Controller (<code>server.js</code>)</strong>: Enforces a 50kb payload limit, wraps letters in passive <code>&lt;letter_document&gt;</code> tags for prompt injection defense, and queries Gemini with native structured outputs.</li>
+        <li><strong>Deterministic Verbatim Verifier (<code>server.js</code>)</strong>: Programmatically checks whether AI-extracted deadlines and amounts literally appear in the source text, normalizing whitespace variations.</li>
+      </ul>
+
+      <!-- Inline Architecture Diagram -->
+      <div class="diagram-wrapper">
+        <svg class="diagram-svg" viewBox="0 0 760 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Notice Paper Data Flow Diagram">
+          <!-- Browser Box -->
+          <rect x="10" y="30" width="200" height="120" rx="6" fill="#F2EFE8" stroke="#2C5282" stroke-width="2"/>
+          <text x="110" y="55" font-family="Georgia" font-weight="bold" font-size="14" fill="#2C5282" text-anchor="middle">1. Client Browser</text>
+          <text x="110" y="80" font-family="monospace" font-size="11" fill="#2D3748" text-anchor="middle">public/app.js</text>
+          <text x="110" y="105" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• Client validation</text>
+          <text x="110" y="125" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• POST /api/explain</text>
+
+          <!-- Arrow 1 -> 2 -->
+          <path d="M 215 90 L 265 90" stroke="#C05621" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="240" y="80" font-family="monospace" font-size="9" fill="#C05621" text-anchor="middle">JSON</text>
+
+          <!-- Server Box -->
+          <rect x="270" y="30" width="220" height="120" rx="6" fill="#FAF8F5" stroke="#C05621" stroke-width="2"/>
+          <text x="380" y="55" font-family="Georgia" font-weight="bold" font-size="14" fill="#C05621" text-anchor="middle">2. Express Server</text>
+          <text x="380" y="80" font-family="monospace" font-size="11" fill="#2D3748" text-anchor="middle">server.js</text>
+          <text x="380" y="105" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• 50kb limit &amp; prompt wrap</text>
+          <text x="380" y="125" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• Gemini Structured Output</text>
+
+          <!-- Arrow 2 -> 3 -->
+          <path d="M 495 90 L 545 90" stroke="#276749" stroke-width="2"/>
+
+          <!-- Verifier Box -->
+          <rect x="550" y="30" width="200" height="120" rx="6" fill="#F0FFF4" stroke="#276749" stroke-width="2"/>
+          <text x="650" y="55" font-family="Georgia" font-weight="bold" font-size="14" fill="#276749" text-anchor="middle">3. Verbatim Verifier</text>
+          <text x="650" y="80" font-family="monospace" font-size="11" fill="#2D3748" text-anchor="middle">verifyVerbatimSubstring</text>
+          <text x="650" y="105" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• Normalized substring match</text>
+          <text x="650" y="125" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• Grounded status badge</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Guided Code Route -->
+    <section>
+      <h2>2. Guided Code Route: Following One Real Action</h2>
+      <p>To understand how Notice Paper works under the hood, let's trace what happens from the exact moment you click <strong>"Explain this letter"</strong> to the moment the verified result cards appear on your screen.</p>
+
+      <!-- Stop 1 -->
+      <div class="stop-card">
+        <span class="stop-badge">Stop 1: The Input &amp; Trigger</span>
+        <h3>Browser Entry Point &amp; Validation</h3>
+        <p><strong>File:</strong> <code>public/app.js</code> (Search anchor: <code>btnExplain.addEventListener</code> / <code>validateInput</code>)</p>
+        <p>When the user clicks the explain button, <code>validateInput()</code> checks the letter text immediately:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
+          <li>If text is empty, under 15 words, or over 10,000 characters, it stops right away, clears any stale previous results/notices, and shows a friendly inline alert.</li>
+          <li>If valid, it sets the loading skeleton state and sends an asynchronous <code>POST /api/explain</code> request carrying <code>{ text, language }</code>.</li>
+        </ul>
+      </div>
+
+      <!-- Stop 2 -->
+      <div class="stop-card stop-2">
+        <span class="stop-badge">Stop 2: The AI Processing Kernel</span>
+        <h3>Server Route, Prompt Defense &amp; Structured Output</h3>
+        <p><strong>File:</strong> <code>server.js</code> (Search anchor: <code>app.post('/api/explain'</code> / <code>responseSchema</code>)</p>
+        <p>The Express backend receives the letter. It protects the application through three layers:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
+          <li><strong>Passive Isolation:</strong> The user's letter is enclosed inside <code>&lt;letter_document&gt;...&lt;/letter_document&gt;</code> tags so that instructions like <em>"ignore previous instructions"</em> cannot hijack the model.</li>
+          <li><strong>Zero Logging:</strong> The server never logs the letter text to the console, protecting user privacy.</li>
+          <li><strong>JSON Schema Enforcement:</strong> Instead of asking Gemini to write arbitrary text, it passes <code>responseSchema</code> to guarantee fields like <code>amount_due</code>, <code>deadline</code>, <code>summary</code>, and <code>next_steps</code> arrive cleanly.</li>
+        </ul>
+      </div>
+
+      <!-- Stop 3 -->
+      <div class="stop-card stop-3">
+        <span class="stop-badge">Stop 3: Output Grounding</span>
+        <h3>Verbatim Substring Verification &amp; Badge Rendering</h3>
+        <p><strong>Files:</strong> <code>server.js</code> (Search anchor: <code>verifyVerbatimSubstring</code>) &amp; <code>public/app.js</code> (Search anchor: <code>renderResults</code>)</p>
+        <p>Before sending the answer back to the user, the server runs a deterministic JavaScript substring search on the raw letter text:</p>
+        <pre><code>function verifyVerbatimSubstring(candidate, fullText) {
+  if (!candidate || !fullText) return false;
+  return normalizeWhitespace(fullText).includes(normalizeWhitespace(candidate));
+}</code></pre>
+        <p>If the extracted deadline and amount exist literally in the letter, it sets <code>amount_verified: true</code>. The frontend then draws the green <strong>"Found in the letter"</strong> badge. If the model altered or fabricated a number, a terracotta warning badge is displayed instead.</p>
+      </div>
+    </section>
+
+    <!-- To Change This, Start Here -->
+    <section>
+      <h2>3. "To Change This, Start Here"</h2>
+      <p>Quick reference pointers for modifying or extending Notice Paper in the future:</p>
+
+      <div class="change-pointer">
+        <strong>Card text, translations, or error wording:</strong>
+        <br>Edit the <code>I18N</code> dictionary in <code>public/app.js</code> (lines 13–146). Both English (<code>en</code>) and Bahasa Indonesia (<code>id</code>) strings are organized side-by-side.
+      </div>
+
+      <div class="change-pointer">
+        <strong>Gemini Model or Server Port:</strong>
+        <br>Edit <code>.env</code>. You can change <code>GEMINI_MODEL=gemini-3.5-flash-lite</code> to any supported Google Gemini model or alter <code>PORT=3000</code> without modifying code.
+      </div>
+
+      <div class="change-pointer">
+        <strong>AI Instructions &amp; Interpretation Rules:</strong>
+        <br>Edit <code>systemInstruction</code> in <code>server.js</code> (lines 75–125). Here you can calibrate rules (e.g. earliest deadline pairing, tone, or uncertainty detection).
+      </div>
+
+      <div class="change-pointer">
+        <strong>Visual Styling, Colors, and Typography:</strong>
+        <br>Edit <code>public/style.css</code>. Notice Paper uses a 60/30/10 CSS custom property palette (<code>--bg-canvas: #F2EFE8</code>, <code>--bg-card: #FAF8F5</code>, <code>--accent-terracotta: #C05621</code>).
+      </div>
+
+      <details>
+        <summary>View Safe Incidental Edit Example (Custom Reassurance Message)</summary>
+        <p style="margin-top: 0.75rem;">Want to personalize the app? Open <code>public/app.js</code>, find <code>errorReassurance</code> in <code>I18N.en</code>, and modify the reassurance string from:</p>
+        <pre><code>errorReassurance: "Your letter is still safe in the box and hasn't been lost."</code></pre>
+        <p>to whatever comforting message you prefer. When an error occurs, the user will see your updated text immediately upon browser refresh.</p>
+      </details>
+    </section>
+
+    <!-- A Practice to Reuse -->
+    <section>
+      <h2>4. A Practice to Reuse: Deterministic Output Grounding</h2>
+      <div class="practice-box">
+        <h3 style="margin-top: 0; color: var(--primary-terracotta);">Never Ask an LLM to Verify Its Own Factual Extraction</h3>
+        <p>Large language models excel at summarizing, explaining, and simplifying complex text. However, they can produce subtle hallucinations or alter numbers and dates without warning.</p>
+        <p><strong>The reusable architectural pattern:</strong></p>
+        <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+          <li>Let the AI extract the candidate fact (e.g. <code>$60.00</code> or <code>November 3, 2026</code>).</li>
+          <li>Have your server run a deterministic, traditional code check (like <code>fullText.includes(candidate)</code> with whitespace normalization) against the ground-truth user input.</li>
+          <li>Render explicit confidence badges to the user based on that deterministic check.</li>
+        </ol>
+        <p style="margin-top: 0.75rem;">This guarantees you never present an ungrounded number as verified fact, while keeping your architecture fast, cheap, and completely predictable.</p>
+      </div>
+    </section>
+
+    <!-- How to Run -->
+    <section>
+      <h2>5. Running the App Again</h2>
+      <p>To restart Notice Paper at any time on your machine:</p>
+      <pre><code># 1. Install packages (if freshly cloned)
+npm install
+
+# 2. Start the Express server
+npm start
+
+# 3. Open your browser
+http://localhost:3000</code></pre>
+      <p>To run automated tests offline (without consuming Gemini API quota):</p>
+      <pre><code>npm test</code></pre>
+    </section>
+
+    <footer>
+      <p>Notice Paper • Build With AI Basics Hackathon • Created with plan-first spec-driven design</p>
+    </footer>
+  </div>
+</body>
+</html>

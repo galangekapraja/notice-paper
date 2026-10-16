@@ -79,20 +79,20 @@ Learner kick-the-tires observations recorded:
 - Requested refinement: Add meta description to `index.html` for Lighthouse SEO audit.
 
 - [x] Clear previous results or notice cards on client validation failure (when new input is empty, too short, or too long)
-- [ ] Add meta description to index.html for Lighthouse SEO audit
-- [ ] Final review complete — feedback resolved and learner confirms ready to ship
+- [x] Add meta description to index.html for Lighthouse SEO audit
+- [x] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
+- [x] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [to be filled upon completion]
-Route and stops: [to be filled upon completion]
-Edit outcome: [to be filled upon completion]
-Reflection: [to be filled upon completion]
-Activity mode: [to be filled upon completion]
+Activity and evidence: Guided code tour following one real user action ("Explain an official letter") through 3 actual code locations (client validation & POST trigger, server passive prompt & structured schema, and server-side deterministic verbatim verifier), directly fulfilling learner's profile goal to understand AI internals and output verification.
+Route and stops: Stop 1: `public/app.js` (`btnExplain.addEventListener` / `validateInput`), Stop 2: `server.js` (`app.post('/api/explain')` / `responseSchema`), Stop 3: `server.js` (`verifyVerbatimSubstring`) & `public/app.js` (`renderResults`).
+Edit outcome: Safe incidental label edit shown via `<details>` in `app-map.html` for `I18N` reassurance message in `public/app.js`.
+Reflection: Offered optional transfer reflection question on what to do differently next time starting with an AI agent.
+Activity mode: guided route (tailored to learner with ~30% coding experience per profile).
 
 ## Revisions
 
