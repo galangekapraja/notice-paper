@@ -100,7 +100,8 @@ Notice Paper is built as a lightweight, transparent full-stack web application r
   npm start
   ```
 - **Accessing the App**: Open `http://localhost:3000` in any web browser.
-- **Demo Recording**: The app runs locally for the required 1–2 minute demonstration video. No cloud deployment required for hackathon submission.
+- **Demo Recording**: The app runs locally for the required demonstration video. No cloud deployment required for hackathon submission.
+- **Public GitHub Repository**: https://github.com/galangekapraja/notice-paper
 
 ---
 
