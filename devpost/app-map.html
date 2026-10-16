@@ -187,6 +187,14 @@
       margin-top: 1rem;
     }
 
+    .limit-box {
+      border-left: 4px solid #D69E2E;
+      background: #FEFCBF;
+      padding: 1rem 1.25rem;
+      border-radius: 0 6px 6px 0;
+      margin-top: 1rem;
+    }
+
     footer {
       text-align: center;
       font-size: 0.85rem;
@@ -211,7 +219,7 @@
       <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
         <li><strong>Frontend Client (<code>public/index.html</code>, <code>public/app.js</code>, <code>public/style.css</code>)</strong>: Collects letter text, validates boundaries (&lt;15 words, &gt;10,000 characters, empty), renders loading states, and draws verified badges.</li>
         <li><strong>Server &amp; API Controller (<code>server.js</code>)</strong>: Enforces a 50kb payload limit, wraps letters in passive <code>&lt;letter_document&gt;</code> tags for prompt injection defense, and queries Gemini with native structured outputs.</li>
-        <li><strong>Deterministic Verbatim Verifier (<code>server.js</code>)</strong>: Programmatically checks whether AI-extracted deadlines and amounts literally appear in the source text, normalizing whitespace variations.</li>
+        <li><strong>Deterministic Verbatim Verifier (<code>server.js</code>)</strong>: Programmatically checks whether AI-extracted deadlines and amounts literally appear in the source text, normalizing whitespace and punctuation variations.</li>
       </ul>
 
       <!-- Inline Architecture Diagram -->
@@ -225,7 +233,7 @@
           <text x="110" y="125" font-family="sans-serif" font-size="10" fill="#5A6A80" text-anchor="middle">• POST /api/explain</text>
 
           <!-- Arrow 1 -> 2 -->
-          <path d="M 215 90 L 265 90" stroke="#C05621" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M 215 90 L 265 90" stroke="#C05621" stroke-width="2"/>
           <text x="240" y="80" font-family="monospace" font-size="9" fill="#C05621" text-anchor="middle">JSON</text>
 
           <!-- Server Box -->
@@ -257,10 +265,10 @@
       <div class="stop-card">
         <span class="stop-badge">Stop 1: The Input &amp; Trigger</span>
         <h3>Browser Entry Point &amp; Validation</h3>
-        <p><strong>File:</strong> <code>public/app.js</code> (Search anchor: <code>btnExplain.addEventListener</code> / <code>validateInput</code>)</p>
+        <p><strong>File:</strong> <code>public/app.js</code> (Search anchor: <code>function validateInput</code> and <code>btnExplain.addEventListener('click'</code>)</p>
         <p>When the user clicks the explain button, <code>validateInput()</code> checks the letter text immediately:</p>
         <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
-          <li>If text is empty, under 15 words, or over 10,000 characters, it stops right away, clears any stale previous results/notices, and shows a friendly inline alert.</li>
+          <li>If text is empty, under 15 words, or over 10,000 characters, it stops right away, clears any stale previous results/notices (<code>showState('empty')</code>), and shows a friendly inline alert.</li>
           <li>If valid, it sets the loading skeleton state and sends an asynchronous <code>POST /api/explain</code> request carrying <code>{ text, language }</code>.</li>
         </ul>
       </div>
@@ -269,11 +277,11 @@
       <div class="stop-card stop-2">
         <span class="stop-badge">Stop 2: The AI Processing Kernel</span>
         <h3>Server Route, Prompt Defense &amp; Structured Output</h3>
-        <p><strong>File:</strong> <code>server.js</code> (Search anchor: <code>app.post('/api/explain'</code> / <code>responseSchema</code>)</p>
+        <p><strong>File:</strong> <code>server.js</code> (Search anchor: <code>app.post('/api/explain'</code>, <code>const responseSchema =</code>, and <code>function buildSystemInstruction</code>)</p>
         <p>The Express backend receives the letter. It protects the application through three layers:</p>
         <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem;">
-          <li><strong>Passive Isolation:</strong> The user's letter is enclosed inside <code>&lt;letter_document&gt;...&lt;/letter_document&gt;</code> tags so that instructions like <em>"ignore previous instructions"</em> cannot hijack the model.</li>
-          <li><strong>Zero Logging:</strong> The server never logs the letter text to the console, protecting user privacy.</li>
+          <li><strong>Passive Isolation:</strong> The user's letter is enclosed inside <code>&lt;letter_document&gt;...&lt;/letter_document&gt;</code> tags (search anchor: <code>function buildUserContent</code>) so that instructions like <em>"ignore previous instructions"</em> cannot hijack the model.</li>
+          <li><strong>Zero Logging:</strong> The server never logs the letter text to stdout/console, protecting user privacy.</li>
           <li><strong>JSON Schema Enforcement:</strong> Instead of asking Gemini to write arbitrary text, it passes <code>responseSchema</code> to guarantee fields like <code>amount_due</code>, <code>deadline</code>, <code>summary</code>, and <code>next_steps</code> arrive cleanly.</li>
         </ul>
       </div>
@@ -282,13 +290,27 @@
       <div class="stop-card stop-3">
         <span class="stop-badge">Stop 3: Output Grounding</span>
         <h3>Verbatim Substring Verification &amp; Badge Rendering</h3>
-        <p><strong>Files:</strong> <code>server.js</code> (Search anchor: <code>verifyVerbatimSubstring</code>) &amp; <code>public/app.js</code> (Search anchor: <code>renderResults</code>)</p>
+        <p><strong>Files:</strong> <code>server.js</code> (Search anchor: <code>function verifyVerbatimSubstring</code>) &amp; <code>public/app.js</code> (Search anchor: <code>function renderResults</code>)</p>
         <p>Before sending the answer back to the user, the server runs a deterministic JavaScript substring search on the raw letter text:</p>
-        <pre><code>function verifyVerbatimSubstring(candidate, fullText) {
-  if (!candidate || !fullText) return false;
-  return normalizeWhitespace(fullText).includes(normalizeWhitespace(candidate));
+        <pre><code>function verifyVerbatimSubstring(sourceText, targetStr) {
+  if (!targetStr || typeof targetStr !== 'string') return false;
+  const cleaned = targetStr.trim();
+  if (cleaned === '' || cleaned.toLowerCase() === 'null') return false;
+
+  const normSource = normalizeWhitespace(sourceText).toLowerCase();
+  const normTarget = normalizeWhitespace(cleaned).toLowerCase();
+
+  if (normSource.includes(normTarget)) {
+    return true;
+  }
+  // Check without trailing punctuation (e.g. '.', ',', ';') in target
+  const strippedTarget = normTarget.replace(/[.,;:]+$/, '').trim();
+  if (strippedTarget.length > 0 && normSource.includes(strippedTarget)) {
+    return true;
+  }
+  return false;
 }</code></pre>
-        <p>If the extracted deadline and amount exist literally in the letter, it sets <code>amount_verified: true</code>. The frontend then draws the green <strong>"Found in the letter"</strong> badge. If the model altered or fabricated a number, a terracotta warning badge is displayed instead.</p>
+        <p>If the extracted deadline and amount exist literally in the letter (even with whitespace differences or trailing punctuation), it sets <code>amount_verified: true</code>. The frontend then draws the green <strong>"Found in the letter"</strong> badge. If the model altered or fabricated a number, a terracotta warning badge is displayed instead.</p>
       </div>
     </section>
 
@@ -299,22 +321,22 @@
 
       <div class="change-pointer">
         <strong>Card text, translations, or error wording:</strong>
-        <br>Edit the <code>I18N</code> dictionary in <code>public/app.js</code> (lines 13–146). Both English (<code>en</code>) and Bahasa Indonesia (<code>id</code>) strings are organized side-by-side.
+        <br>Edit the <code>I18N</code> dictionary in <code>public/app.js</code> (search anchor: <code>const I18N = {</code>). Both English (<code>en</code>) and Bahasa Indonesia (<code>id</code>) strings are organized side-by-side.
       </div>
 
       <div class="change-pointer">
         <strong>Gemini Model or Server Port:</strong>
-        <br>Edit <code>.env</code>. You can change <code>GEMINI_MODEL=gemini-3.5-flash-lite</code> to any supported Google Gemini model or alter <code>PORT=3000</code> without modifying code.
+        <br>Edit <code>.env</code> (search anchors: <code>GEMINI_MODEL=</code>, <code>PORT=</code>). You can change to any supported Google Gemini model or alter the port without modifying code.
       </div>
 
       <div class="change-pointer">
         <strong>AI Instructions &amp; Interpretation Rules:</strong>
-        <br>Edit <code>systemInstruction</code> in <code>server.js</code> (lines 75–125). Here you can calibrate rules (e.g. earliest deadline pairing, tone, or uncertainty detection).
+        <br>Edit <code>buildSystemInstruction</code> in <code>server.js</code> (search anchor: <code>function buildSystemInstruction</code>). Here you can calibrate rules (e.g. earliest deadline pairing, tone, or uncertainty detection).
       </div>
 
       <div class="change-pointer">
         <strong>Visual Styling, Colors, and Typography:</strong>
-        <br>Edit <code>public/style.css</code>. Notice Paper uses a 60/30/10 CSS custom property palette (<code>--bg-canvas: #F2EFE8</code>, <code>--bg-card: #FAF8F5</code>, <code>--accent-terracotta: #C05621</code>).
+        <br>Edit <code>public/style.css</code> (search anchor: <code>:root {</code>). Notice Paper uses a 60/30/10 CSS custom property palette (<code>--bg-canvas: #F2EFE8</code>, <code>--bg-card: #FAF8F5</code>, <code>--accent-terracotta: #C05621</code>).
       </div>
 
       <details>
@@ -334,10 +356,16 @@
         <p><strong>The reusable architectural pattern:</strong></p>
         <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
           <li>Let the AI extract the candidate fact (e.g. <code>$60.00</code> or <code>November 3, 2026</code>).</li>
-          <li>Have your server run a deterministic, traditional code check (like <code>fullText.includes(candidate)</code> with whitespace normalization) against the ground-truth user input.</li>
+          <li>Have your server run a deterministic, traditional code check (like <code>verifyVerbatimSubstring(sourceText, targetStr)</code> with whitespace normalization and case-insensitivity) against the ground-truth user input.</li>
           <li>Render explicit confidence badges to the user based on that deterministic check.</li>
         </ol>
-        <p style="margin-top: 0.75rem;">This guarantees you never present an ungrounded number as verified fact, while keeping your architecture fast, cheap, and completely predictable.</p>
+      </div>
+
+      <div class="limit-box">
+        <h3 style="margin-top: 0; color: #744210;">Crucial Architectural Limit: Presence vs. Correctness</h3>
+        <p><strong>The verbatim check proves that a figure is present in the letter, NOT that the right figure was chosen.</strong></p>
+        <p>For example, in a multi-tier bill (such as <code>test-data/sample-multi-amounts.txt</code>), the letter contains both a minimum partial payment (<code>$60.00</code>) and a full total balance (<code>$171.25</code>). Because both figures literally appear in the letter text, <code>verifyVerbatimSubstring()</code> will evaluate to <code>true</code> whichever figure the model extracts.</p>
+        <p>This is why deterministic verification must be paired with explicit prompt pairing rules (Rule 4 in <code>buildSystemInstruction</code>: <code>amount_due</code> must strictly correspond to the earliest required deadline, with secondary tiers moved to uncertainties) and why the README explicitly documents this limit for users and judges.</p>
       </div>
     </section>
 
