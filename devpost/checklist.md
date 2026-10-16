@@ -39,7 +39,7 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
   Learner check: Pause for hands-on walkthrough: Inspect the verbatim check code in `server.js`, test with `sample-overdue-bill.txt` and `sample-multi-amounts.txt`, compare the amount selected by the model with the actual final total bill in the letter, and observe the plain-language verified badges.
   Commit: `Add server-side verbatim verification with whitespace normalization and multi-amount test`
 
-- [ ] **4. Uncertainty Flags, Edge States, Prompt Injection Defense & Transient Retry**
+- [x] **4. Uncertainty Flags, Edge States, Prompt Injection Defense & Transient Retry**
   Becomes usable: The app gracefully handles ambiguous clauses (Card 5), non-English inputs, non-official texts (recipes/gibberish), input >10,000 chars, network/service dropouts with 1-second retry backoff, and prompt injection attempts using `test-data/sample-injection-attempt.txt` and `test-data/sample-ambiguous-notice.txt`. Results strictly avoid mentioning payment methods or phone numbers not present in the letter text.
   Why now: Rounds out the proof of concept with all safety boundaries, failure modes, and test samples so the app is completely dependable for the demo recording.
   PRD ref: `prd.md > States and Boundaries` (states 4-7), `prd.md > Features and Behavior > 6. Structured Results Display` (Card 5)
@@ -82,6 +82,14 @@ Reflection: [to be filled upon completion]
 Activity mode: [to be filled upon completion]
 
 ## Revisions
+
+- **2026-10-17 (Slice 4: Edge States, Prompt Injection Defense, Retry & Network Failure Handling)**:
+  - Documented in `.env.example` that Google periodically updates free-tier model availability and deprecates older models.
+  - Verified edge state handling for non-English letters (fixed bilingual notice `noticeNonEnglishTitle`) and non-official texts like recipes (`noticeNonLetterTitle`).
+  - Verified prompt injection defense using `sample-injection-attempt.txt`: passive document boundary `<letter_document>` prevents instruction execution.
+  - Verified ambiguity detection using `sample-ambiguous-notice.txt` with uncertainty flags for vague timelines and fee schedules.
+  - Verified network/service error states properly hide all result cards and offer retry.
+  - Created automated verification test `test/slice4-verify.js` and `test/network-error-verify.js`.
 
 - **2026-10-17 (Slice 3: Verbatim Verification, Null Display, Badge Logic & Deadline/Amount Pairing)**:
   - Implemented server-side deterministic substring check with whitespace normalization (`normalizeWhitespace` and `verifyVerbatimSubstring` in `server.js`).
