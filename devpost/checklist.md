@@ -83,6 +83,15 @@ Activity mode: [to be filled upon completion]
 
 ## Revisions
 
+- **2026-10-17 (Repository review fixes)**:
+  - `server.js`: the server now enforces "up to 3 next steps" and drops empty or non-string list items itself (`cleanStringList`), instead of relying on the model following the schema description. Malformed JSON request bodies now return `400 INVALID_JSON` without Express printing the error, whose message could contain the first characters of the request body.
+  - `test/network-error-verify.js`: replaced a test that only searched `app.js` for strings (it printed several checks without testing them) with a behavior test that runs the real `public/app.js` in a fake DOM and checks titles, badges, hidden cards and the retry button. Checked that it fails when the code is broken.
+  - `test/slice3-verify.js`: added a test that documents the limit of the verbatim check (a present-but-wrong figure still verifies) and tests for the list cleanup.
+  - `package.json`: added `npm test` (offline) and `npm run test:live` (needs the server running and uses Gemini quota), and `engines` (Node 18+).
+  - `README.md`: corrected the description of sample 3, documented offline vs live tests, Node requirement, the Google Fonts request, and two more limits (language switch after a result; tests are evidence, not proof).
+  - Removed the duplicate `agent/skills/` folder (a line-wrapped copy of `.agents/skills/`; `.claude/skills` links to `.agents/skills/`).
+  - Hands-on checkpoints and Final Review are intentionally NOT ticked: the learner's own kick-the-tires session is still pending.
+
 - **2026-10-17 (Slice 5: Polish, Accessibility, Reviewer Documentation & Git Audit)**:
   - Replaced emoji icons in all result cards with accessible, high-contrast inline SVG icons (calendar, lightbulb, scale, checkmark, magnifier) with `aria-hidden="true"`, ensuring card titles carry semantic meaning.
   - Retitled Card 5 to "Also worth knowing" / "Perlu diketahui juga" (with intro: "Important details or secondary tiers noted from the letter:") so secondary payment tiers and notes read cleanly without implying false confusion.

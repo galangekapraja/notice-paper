@@ -4,7 +4,9 @@
   "description": "Plain-language interpreter for official letters and bills",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "NODE_ENV=test node test/slice2-verify.js && node test/slice3-verify.js && node test/network-error-verify.js",
+    "test:live": "node test/slice1-verify.js && node test/slice4-verify.js && node test/run-four-samples.js"
   },
   "keywords": [
     "ai",
@@ -18,5 +20,8 @@
     "@google/genai": "^2.29.1",
     "dotenv": "^18.0.8",
     "express": "^4.22.3"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

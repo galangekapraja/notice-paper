@@ -425,8 +425,7 @@ Apex Energy Services`;
     el.btnExplain.click();
   });
 
-  // Render Results (Prepared for Slice 2 & 3)
-  // Render Results (Prepared for Slice 2 & 3)
+  // Render Results
   function renderResults(data, shouldScroll = true) {
     state.lastResult = data;
     const t = I18N[state.language];
@@ -593,7 +592,9 @@ Apex Energy Services`;
     validateInput,
     countWords,
     setLanguage,
-    loadSample
+    loadSample,
+    renderResults,
+    handleError
   };
 
 })();

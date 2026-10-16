@@ -51,6 +51,25 @@ Reconnection fee is $35.00.`;
   }
   console.log('✓ normalizeWhitespace collapses tabs, newlines, and multiple spaces into single space');
 
+  // 6. Documented limit: the check proves PRESENCE, not that the right figure was chosen.
+  // "$35.00" is a real figure in this letter (the reconnection fee), so it verifies as true
+  // even though it is not the amount due. This is why the prompt has a pairing rule and
+  // why the README lists this as a limit.
+  if (verifyVerbatimSubstring(sourceLetter, '$35.00') !== true) {
+    throw new Error('Expected a present-but-wrong figure ($35.00) to verify true (presence only)');
+  }
+  console.log('✓ Limit confirmed: a present-but-wrong figure still verifies true (presence, not correctness)');
+
+  // 7. Server-side list cleanup: at most 3 steps, only non-empty strings, wrong types become []
+  const cleaned = app.cleanStringList(['a', '  ', 'b', 42, 'c', 'd'], 3);
+  if (JSON.stringify(cleaned) !== JSON.stringify(['a', 'b', 'c'])) {
+    throw new Error(`cleanStringList failed: ${JSON.stringify(cleaned)}`);
+  }
+  if (app.cleanStringList(undefined, 3).length !== 0 || app.cleanStringList('not a list', 3).length !== 0) {
+    throw new Error('cleanStringList should return [] for non-arrays');
+  }
+  console.log('✓ cleanStringList caps next steps at 3 and drops empty or non-string items');
+
   console.log('\nAll Slice 3 mechanical verifications PASSED!');
   process.exit(0);
 }

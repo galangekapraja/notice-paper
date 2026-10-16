@@ -67,6 +67,16 @@ function normalizeWhitespace(str) {
   return str.replace(/\s+/g, ' ').trim();
 }
 
+// Keeps only non-empty strings from a model-provided list and caps its length.
+// The schema description asks for "up to 3" steps, but the server enforces it.
+function cleanStringList(list, max) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter(item => typeof item === 'string' && item.trim() !== '')
+    .map(item => item.trim())
+    .slice(0, max);
+}
+
 // Deterministic server-side verbatim check with whitespace normalization
 function verifyVerbatimSubstring(sourceText, targetStr) {
   if (!targetStr || typeof targetStr !== 'string') return false;
@@ -300,6 +310,12 @@ app.post('/api/explain', async (req, res) => {
           parsed.deadline = null;
         }
 
+        // Enforce output shape server-side instead of trusting the model
+        parsed.summary = typeof parsed.summary === 'string' ? parsed.summary : '';
+        parsed.consequences = typeof parsed.consequences === 'string' ? parsed.consequences : '';
+        parsed.next_steps = cleanStringList(parsed.next_steps, 3);
+        parsed.uncertainties = cleanStringList(parsed.uncertainties, Infinity);
+
         // Programmatic verbatim verification with whitespace normalization
         parsed.amount_verified = parsed.amount_due !== null ? verifyVerbatimSubstring(text, parsed.amount_due) : false;
         parsed.deadline_verified = parsed.deadline !== null ? verifyVerbatimSubstring(text, parsed.deadline) : false;
@@ -358,6 +374,11 @@ app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large') {
     return res.status(413).json({ success: false, error: 'PAYLOAD_TOO_LARGE' });
   }
+  // Malformed JSON bodies: answer without letting Express print the error,
+  // because its message can contain a snippet of the request body (letter text).
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ success: false, error: 'INVALID_JSON' });
+  }
   next(err);
 });
 
@@ -371,5 +392,6 @@ if (require.main === module) {
 // Attach helper functions for testing
 app.verifyVerbatimSubstring = verifyVerbatimSubstring;
 app.normalizeWhitespace = normalizeWhitespace;
+app.cleanStringList = cleanStringList;
 
 module.exports = app;
