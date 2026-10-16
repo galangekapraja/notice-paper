@@ -93,35 +93,55 @@ function classifyError(err) {
   let statusCode = 500;
   let isConfig = false;
   let category = 'UNKNOWN_ERROR';
+  let reason = 'UNKNOWN';
 
   const msg = (err && (err.message || '')) + ' ' + (err && (err.statusText || ''));
   if (err && err.status) statusCode = err.status;
   if (err && err.code && typeof err.code === 'number') statusCode = err.code;
 
-  if (statusCode === 404 || msg.includes('404') || msg.includes('NOT_FOUND') || msg.includes('not found')) {
+  // Detect zero free quota: e.g. "limit: 0" or "quota is 0"
+  const isZeroQuota = (statusCode === 429 || msg.includes('RESOURCE_EXHAUSTED')) &&
+                      (msg.includes('limit: 0') || msg.includes('limit of 0') || msg.includes('quota is 0') || msg.includes('quota: 0'));
+
+  if (isZeroQuota) {
+    statusCode = 429;
+    isConfig = true;
+    category = 'FREE_QUOTA_ZERO';
+    reason = 'RESOURCE_EXHAUSTED';
+  } else if (statusCode === 404 || msg.includes('404') || msg.includes('NOT_FOUND') || msg.includes('not found')) {
     statusCode = 404;
     isConfig = true;
     category = 'MODEL_NOT_FOUND';
+    reason = 'NOT_FOUND';
   } else if (statusCode === 400 || statusCode === 401 || statusCode === 403 || 
              msg.includes('API_KEY_INVALID') || msg.includes('API key not valid') || msg.includes('PERMISSION_DENIED')) {
     statusCode = (statusCode === 401 || statusCode === 403) ? statusCode : 401;
     isConfig = true;
     category = 'AUTH_ERROR';
+    reason = msg.includes('PERMISSION_DENIED') ? 'PERMISSION_DENIED' : 'API_KEY_INVALID';
   } else if (statusCode === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429')) {
     statusCode = 429;
     isConfig = false;
     category = 'RATE_LIMIT';
+    reason = 'RESOURCE_EXHAUSTED';
   } else if (statusCode === 503 || msg.includes('503') || msg.includes('UNAVAILABLE')) {
     statusCode = 503;
     isConfig = false;
     category = 'SERVICE_UNAVAILABLE';
+    reason = 'UNAVAILABLE';
   } else if (err && (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT')) {
     statusCode = 0;
     isConfig = false;
     category = 'NETWORK_ERROR';
+    reason = err.code;
+  } else if (msg.includes('INVALID_ARGUMENT')) {
+    statusCode = 400;
+    isConfig = true;
+    category = 'INVALID_ARGUMENT';
+    reason = 'INVALID_ARGUMENT';
   }
 
-  return { statusCode, isConfig, category };
+  return { statusCode, isConfig, category, reason };
 }
 
 // Health check endpoint
@@ -152,10 +172,13 @@ app.post('/api/explain', async (req, res) => {
   if (process.env.NODE_ENV === 'test' && (process.env.USE_STUB === 'true' || req.headers['x-test-stub'])) {
     const stubType = req.headers['x-test-stub'];
     if (stubType === 'error-429') {
-      return res.status(503).json({ success: false, error: 'SERVICE_BUSY', category: 'RATE_LIMIT' });
+      return res.status(429).json({ success: false, error: 'RATE_LIMIT', category: 'RATE_LIMIT', reason: 'RESOURCE_EXHAUSTED' });
     }
     if (stubType === 'error-config') {
-      return res.status(404).json({ success: false, error: 'CONFIG_ERROR', category: 'MODEL_NOT_FOUND' });
+      return res.status(404).json({ success: false, error: 'CONFIG_ERROR', category: 'MODEL_NOT_FOUND', reason: 'NOT_FOUND' });
+    }
+    if (stubType === 'error-zero-quota') {
+      return res.status(429).json({ success: false, error: 'CONFIG_ERROR', category: 'FREE_QUOTA_ZERO', reason: 'RESOURCE_EXHAUSTED' });
     }
     if (stubType === 'corrupted-json') {
       return res.status(500).json({ success: false, error: 'MALFORMED_RESPONSE' });
@@ -181,16 +204,17 @@ app.post('/api/explain', async (req, res) => {
   // 3. API Key Check
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    console.error('[CONFIG_ERROR] Gemini API key is missing or not configured in .env');
+    console.error('[ERROR] Category: API_KEY_MISSING | HTTP Status: 401 | Reason: API_KEY_NOT_CONFIGURED');
     return res.status(401).json({
       success: false,
       error: 'CONFIG_ERROR',
-      category: 'API_KEY_MISSING'
+      category: 'API_KEY_MISSING',
+      reason: 'API_KEY_NOT_CONFIGURED'
     });
   }
 
-  // 4. Gemini API Call
-  const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  // 4. Gemini API Call (Configurable via GEMINI_MODEL in .env, defaults to gemini-3.5-flash-lite)
+  const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
   try {
     const ai = new GoogleGenAI({ apiKey });
@@ -230,13 +254,14 @@ app.post('/api/explain', async (req, res) => {
         lastError = err;
         lastErrorInfo = classifyError(err);
 
-        // If it's a configuration error (404 model not found, 401/403 invalid key), abort immediately without retry
+        // If it's a configuration error (404 model not found, 401/403 invalid key, zero free quota), abort immediately without retry
         if (lastErrorInfo.isConfig) {
-          console.error(`[CONFIG_ERROR] Category: ${lastErrorInfo.category} | HTTP Status: ${lastErrorInfo.statusCode}`);
+          console.error(`[ERROR] Category: ${lastErrorInfo.category} | HTTP Status: ${lastErrorInfo.statusCode} | Reason: ${lastErrorInfo.reason}`);
           return res.status(lastErrorInfo.statusCode).json({
             success: false,
             error: 'CONFIG_ERROR',
-            category: lastErrorInfo.category
+            category: lastErrorInfo.category,
+            reason: lastErrorInfo.reason
           });
         }
 
@@ -247,21 +272,23 @@ app.post('/api/explain', async (req, res) => {
       }
     }
 
-    // Both attempts failed for transient reason: Log ONLY category & status code (ZERO letter text, ZERO keys)
-    console.error(`[TRANSIENT_ERROR] Category: ${lastErrorInfo ? lastErrorInfo.category : 'SERVICE_UNAVAILABLE'} | HTTP Status: ${lastErrorInfo ? lastErrorInfo.statusCode : 503}`);
-    return res.status(503).json({
+    // Both attempts failed for transient reason: Log ONLY category, HTTP status, and reason (ZERO letter text, ZERO keys)
+    console.error(`[ERROR] Category: ${lastErrorInfo ? lastErrorInfo.category : 'SERVICE_UNAVAILABLE'} | HTTP Status: ${lastErrorInfo ? lastErrorInfo.statusCode : 503} | Reason: ${lastErrorInfo ? lastErrorInfo.reason : 'UNAVAILABLE'}`);
+    return res.status(lastErrorInfo && lastErrorInfo.statusCode === 429 ? 429 : 503).json({
       success: false,
-      error: 'SERVICE_BUSY',
-      category: lastErrorInfo ? lastErrorInfo.category : 'SERVICE_UNAVAILABLE'
+      error: lastErrorInfo && lastErrorInfo.category === 'RATE_LIMIT' ? 'RATE_LIMIT' : 'SERVICE_BUSY',
+      category: lastErrorInfo ? lastErrorInfo.category : 'SERVICE_UNAVAILABLE',
+      reason: lastErrorInfo ? lastErrorInfo.reason : 'UNAVAILABLE'
     });
 
   } catch (err) {
     const errInfo = classifyError(err);
-    console.error(`[INTERNAL_ERROR] Category: ${errInfo.category} | HTTP Status: ${errInfo.statusCode}`);
-    return res.status(500).json({
+    console.error(`[ERROR] Category: ${errInfo.category} | HTTP Status: ${errInfo.statusCode} | Reason: ${errInfo.reason}`);
+    return res.status(errInfo.statusCode || 500).json({
       success: false,
-      error: 'INTERNAL_ERROR',
-      category: errInfo.category
+      error: errInfo.isConfig ? 'CONFIG_ERROR' : 'INTERNAL_ERROR',
+      category: errInfo.category,
+      reason: errInfo.reason
     });
   }
 });

@@ -83,3 +83,12 @@ Activity mode: [to be filled upon completion]
 
 ## Revisions
 
+- **2026-10-17 (Gemini Free-Tier Model Selection & Error Handling Improvement)**:
+  - Investigated official Google AI documentation (`ai.google.dev`) for active free-tier Gemini models.
+  - Selected and tested 3 Flash/Flash-Lite candidate models (`gemini-3.5-flash-lite`, `gemini-3.6-flash`, `gemini-3.8-flash`) with live requests; all succeeded with HTTP 200.
+  - Selected `gemini-3.5-flash-lite` as the primary default free-tier model in `.env.example` and `server.js` fallback, keeping `GEMINI_MODEL` fully configurable via `.env` without modifying code.
+  - Enhanced error classification in `server.js`: cleanly separated configuration errors (invalid key, model not found, key unconfigured, zero free quota) from transient errors (rate limit 429, service unavailable 503, network).
+  - Ensured terminal error logging outputs strictly: error category, HTTP status code, and API reason token (zero letter content, zero API keys, zero `.env` exposure).
+  - Updated client UI in `public/app.js` to display honest, informative messages for configuration errors, hide the retry button when re-requesting without configuration fixes is unhelpful, and guarantee results cards remain hidden on error.
+  - Verified live letter processing on Sample 1 (`sample-overdue-bill.txt`), confirming verbatim extraction and grounded results.
+  - Documented model configuration and free-tier guidelines in `README.md` and updated `devpost/spec.md`.

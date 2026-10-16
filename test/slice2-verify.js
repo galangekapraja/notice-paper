@@ -78,19 +78,26 @@ async function verify() {
   }
   console.log('✓ Structured output returned properly with required fields');
 
-  // 5. Transient error (429/503) stub test
+  // 5. Transient error (429 rate limit) stub test
   const errorRes = await post('/api/explain', { text: validSample }, { 'x-test-stub': 'error-429' });
-  if (errorRes.status !== 503 || errorRes.body.error !== 'SERVICE_BUSY') {
+  if (errorRes.status !== 429 || errorRes.body.error !== 'RATE_LIMIT') {
     throw new Error(`Error stub check failed: ${JSON.stringify(errorRes)}`);
   }
-  console.log('✓ Transient service error handled gracefully with 503 SERVICE_BUSY (no blank screen)');
+  console.log('✓ Transient rate limit handled gracefully with 429 RATE_LIMIT');
 
-  // 6. Configuration error stub test
+  // 6. Configuration error (404 model not found) stub test
   const configRes = await post('/api/explain', { text: validSample }, { 'x-test-stub': 'error-config' });
   if (configRes.status !== 404 || configRes.body.error !== 'CONFIG_ERROR') {
     throw new Error(`Config error check failed: ${JSON.stringify(configRes)}`);
   }
   console.log('✓ Configuration error distinguished properly with 404 CONFIG_ERROR');
+
+  // 7. Configuration error (free quota zero) stub test
+  const zeroQuotaRes = await post('/api/explain', { text: validSample }, { 'x-test-stub': 'error-zero-quota' });
+  if (zeroQuotaRes.status !== 429 || zeroQuotaRes.body.error !== 'CONFIG_ERROR' || zeroQuotaRes.body.category !== 'FREE_QUOTA_ZERO') {
+    throw new Error(`Zero quota check failed: ${JSON.stringify(zeroQuotaRes)}`);
+  }
+  console.log('✓ Zero free quota distinguished properly as CONFIG_ERROR (FREE_QUOTA_ZERO)');
 
   console.log('\nAll Slice 2 mechanical verifications PASSED!');
   process.exit(0);

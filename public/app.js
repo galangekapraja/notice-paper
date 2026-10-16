@@ -72,10 +72,18 @@ Apex Energy Services`;
       disclaimer: "Notice Paper is a plain-language reading aid, not official legal or financial advice.",
       errorNetworkTitle: "Connection Problem",
       errorNetworkDesc: "It looks like your internet connection was lost.",
+      errorZeroQuotaTitle: "Free Tier Quota Unavailable",
+      errorZeroQuotaDesc: "This Gemini model does not offer free quota for your API key. Please select a supported free-tier model (such as gemini-3.5-flash-lite) in .env.",
+      errorModelNotFoundTitle: "Model Not Found",
+      errorModelNotFoundDesc: "The configured Gemini model was not found or is no longer available. Please update GEMINI_MODEL in .env.",
+      errorAuthTitle: "API Key Error",
+      errorAuthDesc: "The Gemini API key is missing or invalid. Please check GEMINI_API_KEY in .env.",
       errorConfigTitle: "Configuration Issue",
-      errorConfigDesc: "The AI service is not properly configured on the server (e.g. invalid API key or model name). Please check the server settings.",
-      errorServiceTitle: "Service Busy",
-      errorServiceDesc: "The explanation service is temporarily busy.",
+      errorConfigDesc: "The AI service is not properly configured on the server. Please check your server settings in .env.",
+      errorRateLimitTitle: "Service Busy",
+      errorRateLimitDesc: "Temporary rate limit reached for the free tier. Please wait a few seconds and try again.",
+      errorServiceTitle: "Service Temporarily Unavailable",
+      errorServiceDesc: "The explanation service is temporarily unavailable. Please try again in a moment.",
       errorReassurance: "Your letter is still safe in the box and hasn't been lost.",
       retryBtn: "Try again",
       noticeNonEnglishTitle: "English Letters Only",
@@ -114,10 +122,18 @@ Apex Energy Services`;
       disclaimer: "Notice Paper adalah alat bantu membaca dengan bahasa sederhana, bukan penasihat hukum atau keuangan resmi.",
       errorNetworkTitle: "Masalah Koneksi",
       errorNetworkDesc: "Sepertinya koneksi internet terputus.",
+      errorZeroQuotaTitle: "Kuota Gratis Tidak Tersedia",
+      errorZeroQuotaDesc: "Model Gemini ini tidak menyediakan kuota gratis untuk API key Anda. Silakan tentukan model gratis yang didukung (misalnya gemini-3.5-flash-lite) di .env.",
+      errorModelNotFoundTitle: "Model Tidak Ditemukan",
+      errorModelNotFoundDesc: "Model Gemini yang dikonfigurasi tidak ditemukan atau sudah tidak tersedia. Silakan perbarui GEMINI_MODEL di .env.",
+      errorAuthTitle: "Kendala Kunci API",
+      errorAuthDesc: "Kunci API Gemini belum diatur atau tidak valid. Silakan periksa GEMINI_API_KEY di .env.",
       errorConfigTitle: "Kendala Konfigurasi",
-      errorConfigDesc: "Layanan AI belum terkonfigurasi dengan benar di server (misalnya API key atau nama model belum sesuai). Silakan periksa pengaturan server.",
-      errorServiceTitle: "Layanan Sedang Sibuk",
-      errorServiceDesc: "Layanan penjelasan sedang sibuk atau mengalami kendala sementara.",
+      errorConfigDesc: "Layanan AI belum terkonfigurasi dengan benar di server. Silakan periksa pengaturan server di .env.",
+      errorRateLimitTitle: "Layanan Sedang Sibuk",
+      errorRateLimitDesc: "Batas panggilan per menit (rate limit) tercapai sementara pada akun gratis. Mohon tunggu beberapa detik lalu coba lagi.",
+      errorServiceTitle: "Layanan Sementara Tidak Tersedia",
+      errorServiceDesc: "Layanan penjelasan sedang mengalami kendala sementara. Silakan coba lagi beberapa saat lagi.",
       errorReassurance: "Surat Anda masih ada di kotak, tidak hilang.",
       retryBtn: "Coba lagi",
       noticeNonEnglishTitle: "Hanya Surat Berbahasa Inggris",
@@ -475,31 +491,60 @@ Apex Energy Services`;
   function applyErrorContent(err) {
     const t = I18N[state.language];
 
-    const isConfigError = err.errorType === 'CONFIG_ERROR' ||
-                          ['MODEL_NOT_FOUND', 'AUTH_ERROR', 'API_KEY_MISSING'].includes(err.category) ||
-                          err.status === 401 || err.status === 404;
-
     const isNetworkError = err.name === 'TypeError' || err.message === 'NETWORK_ERROR' || !navigator.onLine;
 
     if (isNetworkError) {
       el.errorTitle.textContent = t.errorNetworkTitle;
       el.errorDesc.textContent = t.errorNetworkDesc;
       el.btnRetry.hidden = false;
-    } else if (isConfigError) {
+      return;
+    }
+
+    if (err.category === 'FREE_QUOTA_ZERO') {
+      el.errorTitle.textContent = t.errorZeroQuotaTitle;
+      el.errorDesc.textContent = t.errorZeroQuotaDesc;
+      el.btnRetry.hidden = true;
+      return;
+    }
+
+    if (err.category === 'MODEL_NOT_FOUND' || err.status === 404) {
+      el.errorTitle.textContent = t.errorModelNotFoundTitle;
+      el.errorDesc.textContent = t.errorModelNotFoundDesc;
+      el.btnRetry.hidden = true;
+      return;
+    }
+
+    if (err.category === 'AUTH_ERROR' || err.category === 'API_KEY_MISSING' || err.status === 401 || err.status === 403) {
+      el.errorTitle.textContent = t.errorAuthTitle;
+      el.errorDesc.textContent = t.errorAuthDesc;
+      el.btnRetry.hidden = true;
+      return;
+    }
+
+    if (err.errorType === 'CONFIG_ERROR' || ['MODEL_NOT_FOUND', 'AUTH_ERROR', 'API_KEY_MISSING', 'FREE_QUOTA_ZERO'].includes(err.category)) {
       el.errorTitle.textContent = t.errorConfigTitle;
       el.errorDesc.textContent = t.errorConfigDesc;
-      el.btnRetry.hidden = true; // Retrying without server fix will just fail again
-    } else {
-      el.errorTitle.textContent = t.errorServiceTitle;
-      el.errorDesc.textContent = t.errorServiceDesc;
-      el.btnRetry.hidden = false;
+      el.btnRetry.hidden = true;
+      return;
     }
+
+    if (err.category === 'RATE_LIMIT' || err.status === 429) {
+      el.errorTitle.textContent = t.errorRateLimitTitle;
+      el.errorDesc.textContent = t.errorRateLimitDesc;
+      el.btnRetry.hidden = false;
+      return;
+    }
+
+    el.errorTitle.textContent = t.errorServiceTitle;
+    el.errorDesc.textContent = t.errorServiceDesc;
+    el.btnRetry.hidden = false;
   }
 
   // Handle Error
   function handleError(err) {
     state.lastError = err;
     applyErrorContent(err);
+    el.resultsContainer.hidden = true;
     showState('error');
     scrollToResults();
   }

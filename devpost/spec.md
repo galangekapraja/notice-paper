@@ -256,22 +256,24 @@ notice-paper/
 
 ### 1. Google Gemini API
 - **Client**: Google Gen AI SDK (`@google/genai`). Package version confirmed during build.
-- **Model Config**: Configured via `GEMINI_MODEL` in `.env` (e.g. `gemini-2.5-flash`).
+- **Model Config**: Configured dynamically via `GEMINI_MODEL` in `.env` (defaults to `gemini-3.5-flash-lite`, with verified free-tier alternatives `gemini-3.6-flash` and `gemini-3.8-flash`).
 - **Key Required**: User's own `GEMINI_API_KEY` in `.env` (never exposed to browser or tracked in Git).
 - **Free Tier & Costs**: Google AI Studio provides free-tier access for Gemini API models under standard rate limits. Documented in `README.md` for judges and users.
-- **Privacy & Zero Logging**: The server processes letter text strictly in volatile memory. User text is **never logged to terminal console, written to log files, or included in error traces**.
+- **Privacy & Zero Logging**: The server processes letter text strictly in volatile memory. User text is **never logged to terminal console, written to log files, or included in error traces**. Terminal logs strictly record only the error category, HTTP status code, and API reason token.
 
 ---
 
 ## Important Failure Modes & Error Handling
 
-1. **Malformed JSON / Missing Required Schema Fields**:
-   - *What breaks*: The model returns truncated text or fails to complete valid JSON.
-   - *Handling*: Server waits 1 second, then automatically attempts **one single retry**. If the second attempt fails, returns a clean service error without exposing internal error stacks or letter contents.
+1. **Configuration Errors (Invalid API Key, Model Not Found, Key Missing, Zero Free Quota)**:
+   - *What breaks*: The model name is invalid/deprecated (HTTP 404), the key is missing/invalid (HTTP 401/403), or the key has zero free-tier quota allocated for the model (HTTP 429 limit: 0).
+   - *Handling*: Aborts immediately without retry (to save time and quota). Returns `CONFIG_ERROR` with specific category (`MODEL_NOT_FOUND`, `AUTH_ERROR`, `API_KEY_MISSING`, `FREE_QUOTA_ZERO`).
+   - *Terminal Logging*: Logs strictly `[ERROR] Category: <CAT> | HTTP Status: <STATUS> | Reason: <REASON>`. Zero letter text, zero keys.
+   - *Frontend Display*: Honest, clear localized message instructing user to check `.env` settings. Result cards are completely hidden and retry button is hidden (retrying without server fix is useless).
 2. **Transient API Errors (HTTP 429 Rate Limit / HTTP 503 Overloaded / Network Glitch)**:
-   - *What breaks*: Temporary API unavailability.
-   - *Handling*: Server pauses 1 second and performs **one retry**. If still failing, returns a categorized error (`SERVICE_BUSY` or `NETWORK_ERROR`).
-   - *Frontend Display*: Terracotta alert box with localized friendly message: *"The explanation service is temporarily busy. Your letter is still safe in the box."* + interactive "Try again" button.
+   - *What breaks*: Temporary API unavailability or standard per-minute rate limit.
+   - *Handling*: Server pauses 1 second and performs **one retry**. If still failing, returns `RATE_LIMIT` (429) or `SERVICE_BUSY` (503).
+   - *Frontend Display*: Terracotta alert box with localized friendly message: *"The explanation service is temporarily busy. Your letter is still safe in the box."* + interactive "Try again" button. All result cards remain hidden while in error state.
 3. **Failed Verbatim Verification**:
    - *What breaks*: Model returns an amount or deadline that is slightly paraphrased or not found in the normalized source letter.
    - *Handling*: Server flags `amount_verified: false` or `deadline_verified: false`. Frontend displays an unverified warning badge next to the figure: *"Not confirmed in the letter text"* / *"Tidak ditemukan langsung di surat"* rather than presenting it as fact.
