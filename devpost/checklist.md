@@ -49,7 +49,7 @@ Build mode: fast (with dedicated learning code walkthrough pauses at Slice 2 and
   Learner check: Try pasting the recipe text, ambiguous notice, or injection attempt to verify that the app resists hijacking, avoids unstated payment channels/numbers, and triggers the proper edge state.
   Commit: `Implement uncertainty flags, edge states, prompt injection defense, and retry handling`
 
-- [ ] **5. Polishing, Accessibility, Git Audit & Reviewer Documentation**
+- [x] **5. Polishing, Accessibility, Git Audit & Reviewer Documentation**
   Becomes usable: Complete keyboard navigation and visible focus rings, full mobile layout auto-scrolling, a comprehensive `README.md` guiding judges on setup, API keys, free tier, and demo reproduction, plus clean Git audit confirming zero API keys in commit history, and a fresh clone verification test.
   Why now: Prepares the codebase for final review, video demonstration, and Devpost packaging.
   PRD ref: `prd.md > Look and Feel & Accessibility`, `prd.md > What We're Building`
@@ -82,6 +82,15 @@ Reflection: [to be filled upon completion]
 Activity mode: [to be filled upon completion]
 
 ## Revisions
+
+- **2026-10-17 (Slice 5: Polish, Accessibility, Reviewer Documentation & Git Audit)**:
+  - Replaced emoji icons in all result cards with accessible, high-contrast inline SVG icons (calendar, lightbulb, scale, checkmark, magnifier) with `aria-hidden="true"`, ensuring card titles carry semantic meaning.
+  - Retitled Card 5 to "Also worth knowing" / "Perlu diketahui juga" (with intro: "Important details or secondary tiers noted from the letter:") so secondary payment tiers and notes read cleanly without implying false confusion.
+  - Implemented keyboard accessibility: full Tab/Enter navigation, visible `:focus-visible` focus rings, accessible language toggle buttons with `aria-pressed`, and dynamic `aria-live="polite"` region announcements.
+  - Enforced mobile viewport rules at 390px width: zero horizontal scrolling (`overflow-x: hidden`), full card content wrapping, and touch targets at least 48px tall across all interactive elements (`.btn-primary`, `.btn-sample`, `.btn-retry`, `.lang-btn`).
+  - Rewrote `README.md` for Devpost judges: 5-step quickstart setup, dynamic free-tier model configuration, comprehensive test suite guide, explanation of all 4 test samples, zero-retention privacy guarantee, honest limitations section (lexical verification vs. semantic choice, prompt injection mitigation, AI mistake possibility, non-legal advice), and prior work/tools attribution.
+  - Performed Git security audit: confirmed 0 committed secrets or API keys in repository history and verified `.env` is properly ignored.
+  - Verified 100% pass across all 6 test suites (`slice1-verify`, `slice2-verify`, `slice3-verify`, `slice4-verify`, `network-error-verify`, and `run-four-samples`).
 
 - **2026-10-17 (Slice 4: Edge States, Prompt Injection Defense, Retry & Network Failure Handling)**:
   - Documented in `.env.example` that Google periodically updates free-tier model availability and deprecates older models.

@@ -68,8 +68,8 @@ Apex Energy Services`;
       summaryTitle: "What This Letter Is About",
       consequencesTitle: "What Happens If Ignored",
       stepsTitle: "What You Should Do Next",
-      uncertaintiesTitle: "Points Needing Clarification",
-      uncertaintiesIntro: "Some details in this letter are ambiguous or incomplete. We recommend contacting the sender directly:",
+      uncertaintiesTitle: "Also worth knowing",
+      uncertaintiesIntro: "Important details or secondary tiers noted from the letter:",
       disclaimer: "Notice Paper is a plain-language reading aid, not official legal or financial advice.",
       errorNetworkTitle: "Connection Problem",
       errorNetworkDesc: "It looks like your internet connection was lost.",
@@ -119,8 +119,8 @@ Apex Energy Services`;
       summaryTitle: "Ringkasan Isi Surat",
       consequencesTitle: "Akibat Jika Diabaikan",
       stepsTitle: "Langkah yang Perlu Dilakukan",
-      uncertaintiesTitle: "Hal yang Perlu Dikonfirmasi",
-      uncertaintiesIntro: "Beberapa bagian di surat ini ambigu atau kurang jelas. Disarankan bertanya langsung ke pengirim surat:",
+      uncertaintiesTitle: "Perlu diketahui juga",
+      uncertaintiesIntro: "Detail penting atau tenggat pembayaran lanjutan yang tercatat di surat:",
       disclaimer: "Notice Paper adalah alat bantu membaca dengan bahasa sederhana, bukan penasihat hukum atau keuangan resmi.",
       errorNetworkTitle: "Masalah Koneksi",
       errorNetworkDesc: "Sepertinya koneksi internet terputus.",
@@ -157,6 +157,7 @@ Apex Energy Services`;
 
   // DOM Elements
   const el = {
+    langBtns: document.querySelectorAll('.lang-btn'),
     langInputs: document.querySelectorAll('input[name="language"]'),
     uiTitle: document.getElementById('ui-title'),
     uiSubtitle: document.getElementById('ui-subtitle'),
@@ -218,6 +219,16 @@ Apex Energy Services`;
   function setLanguage(lang) {
     state.language = lang;
     const t = I18N[lang];
+
+    el.langBtns.forEach(btn => {
+      const isSelected = (btn.dataset.lang === lang);
+      btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      btn.classList.toggle('active', isSelected);
+    });
+
+    el.langInputs.forEach(input => {
+      input.checked = (input.value === lang);
+    });
 
     el.uiTitle.textContent = t.title;
     el.uiSubtitle.textContent = t.subtitle;
@@ -349,6 +360,12 @@ Apex Energy Services`;
   }
 
   // Event Listeners
+  el.langBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLanguage(btn.dataset.lang);
+    });
+  });
+
   el.langInputs.forEach(input => {
     input.addEventListener('change', (e) => {
       setLanguage(e.target.value);

@@ -22,17 +22,14 @@
         </div>
 
         <div class="lang-selector-wrapper">
-          <fieldset class="lang-selector">
-            <legend class="sr-only">Choose Language</legend>
-            <label class="lang-label">
-              <input type="radio" name="language" value="en" checked>
-              <span>English</span>
-            </label>
-            <label class="lang-label">
-              <input type="radio" name="language" value="id">
-              <span>Bahasa Indonesia</span>
-            </label>
-          </fieldset>
+          <div class="lang-selector" role="group" aria-label="Interface Language">
+            <button type="button" class="lang-btn active" id="lang-btn-en" data-lang="en" aria-pressed="true">
+              English
+            </button>
+            <button type="button" class="lang-btn" id="lang-btn-id" data-lang="id" aria-pressed="false">
+              Bahasa Indonesia
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -44,7 +41,10 @@
           <h2 id="input-heading" class="sr-only">Input Letter</h2>
 
           <div class="privacy-alert" role="note" id="ui-privacy-alert">
-            <span class="alert-icon" aria-hidden="true">🔒</span>
+            <svg class="alert-icon svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
             <span class="privacy-text" id="ui-privacy-text">
               Text is sent to a third-party AI service for processing, which may retain data per its own terms. Do not paste sensitive personal data (national ID, bank account, passwords).
             </span>
@@ -54,7 +54,12 @@
             <div class="paper-sheet-header">
               <span class="sheet-watermark" aria-hidden="true">OFFICIAL CORRESPONDENCE</span>
               <button type="button" class="btn-sample" id="btn-sample">
-                <span class="btn-icon" aria-hidden="true">📄</span>
+                <svg class="btn-icon svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
                 <span id="ui-sample-btn">Try sample letter</span>
               </button>
             </div>
@@ -87,12 +92,17 @@
         </section>
 
         <!-- Right Column: Results Surface -->
-        <section class="column-results" id="results-section" aria-labelledby="results-heading">
+        <section class="column-results" id="results-section" aria-labelledby="results-heading" aria-live="polite">
           <h2 id="results-heading" class="sr-only">Explanation Results</h2>
 
           <!-- 1. Empty State (Initial) -->
           <div class="state-card state-empty" id="state-empty">
-            <div class="empty-icon" aria-hidden="true">📜</div>
+            <svg class="empty-icon svg-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
             <h3 class="empty-title" id="ui-empty-title">Ready to Read</h3>
             <p class="empty-desc" id="ui-empty-desc">
               Your plain-language explanation will appear here after you paste a letter and click the button.
@@ -118,7 +128,11 @@
           <!-- 3. Error Alert State -->
           <div class="state-card state-error" id="state-error" role="alert" hidden>
             <div class="error-badge">
-              <span class="error-icon" aria-hidden="true">⚠️</span>
+              <svg class="error-icon svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
               <h3 class="error-title" id="error-title">Error</h3>
             </div>
             <p class="error-desc" id="error-desc"></p>
@@ -129,20 +143,29 @@
           </div>
 
           <!-- 4. Notice / Special States (Non-English / Not a Letter) -->
-          <div class="state-card state-notice" id="state-notice" hidden>
+          <div class="state-card state-notice" id="state-notice" role="status" hidden>
             <div class="notice-badge">
-              <span class="notice-icon" aria-hidden="true">ℹ️</span>
+              <svg class="notice-icon svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
               <h3 class="notice-title" id="notice-title">Notice</h3>
             </div>
             <p class="notice-desc" id="notice-desc"></p>
           </div>
 
           <!-- 5. Structured Explanation Results -->
-          <div class="results-container" id="results-container" hidden>
+          <div class="results-container" id="results-container" aria-live="polite" hidden>
             <!-- Card 1: Deadline & Amount -->
             <div class="result-card card-deadline" id="card-deadline">
               <div class="deadline-pill">
-                <span class="pill-icon" aria-hidden="true">📅</span>
+                <svg class="pill-icon svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
                 <span class="pill-label" id="ui-deadline-label">DEADLINE & AMOUNT</span>
               </div>
               <div class="deadline-details">
@@ -162,7 +185,11 @@
             <!-- Card 2: Plain Summary -->
             <div class="result-card card-summary">
               <h3 class="card-title">
-                <span class="card-icon" aria-hidden="true">💡</span>
+                <svg class="card-icon svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 18h6"></path>
+                  <path d="M10 22h4"></path>
+                  <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"></path>
+                </svg>
                 <span id="ui-summary-title">What This Letter Is About</span>
               </h3>
               <p class="card-text" id="result-summary"></p>
@@ -171,7 +198,13 @@
             <!-- Card 3: Consequences -->
             <div class="result-card card-consequences">
               <h3 class="card-title">
-                <span class="card-icon" aria-hidden="true">⚖️</span>
+                <svg class="card-icon svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v18"></path>
+                  <path d="M4 6l8-3 8 3"></path>
+                  <path d="M4 6l3 7h-6l3-7z"></path>
+                  <path d="M20 6l3 7h-6l3-7z"></path>
+                  <path d="M8 21h8"></path>
+                </svg>
                 <span id="ui-consequences-title">What Happens If Ignored</span>
               </h3>
               <p class="card-text" id="result-consequences"></p>
@@ -180,20 +213,26 @@
             <!-- Card 4: Next Steps -->
             <div class="result-card card-steps">
               <h3 class="card-title">
-                <span class="card-icon" aria-hidden="true">✅</span>
+                <svg class="card-icon svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
                 <span id="ui-steps-title">What You Should Do Next</span>
               </h3>
               <ol class="steps-list" id="result-steps"></ol>
             </div>
 
-            <!-- Card 5: Uncertainty Flags -->
+            <!-- Card 5: Also Worth Knowing / Uncertainty Flags -->
             <div class="result-card card-uncertainties" id="card-uncertainties" hidden>
               <div class="uncertainty-header">
-                <span class="uncertainty-icon" aria-hidden="true">🔍</span>
-                <h3 class="card-title" id="ui-uncertainties-title">Points Needing Clarification</h3>
+                <svg class="uncertainty-icon svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <h3 class="card-title" id="ui-uncertainties-title">Also worth knowing</h3>
               </div>
               <p class="uncertainty-intro" id="ui-uncertainties-intro">
-                Some details in this letter are ambiguous or incomplete. We recommend contacting the sender directly:
+                Important details or secondary tiers noted from the letter:
               </p>
               <ul class="uncertainties-list" id="result-uncertainties"></ul>
             </div>
